@@ -14,7 +14,7 @@ export default function Footer() {
           
           <div className="flex items-center space-x-6">
             <a
-              href="https://github.com/your-repo/schild-keycloak-sync"
+              href="https://github.com/janrenz/importer"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center space-x-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
