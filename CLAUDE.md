@@ -175,11 +175,9 @@ The application uses a modern design system with:
 
 ## Future Enhancements
 
+Todo:
+- Handle 2FA Accounts
+
 Consider implementing:
 - Bulk operations for large user sets
-- Role assignment based on user types
 - Advanced filtering and search
-- Configuration file import/export
-- Integration with other identity providers
-- Audit logging for sync operations
-- User avatar and profile management
