@@ -155,7 +155,7 @@ export default function ImportTab({ keycloakConfig, isKeycloakAuthenticated, use
 
       setSyncComplete(true);
     } catch (error) {
-      alert(`${dryRun ? 'Test run' : 'Sync'} failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      alert(`${dryRun ? 'Testlauf' : 'Synchronisation'} fehlgeschlagen: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`);
     } finally {
       setIsSyncing(false);
     }

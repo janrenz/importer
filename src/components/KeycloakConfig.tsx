@@ -26,10 +26,10 @@ export default function KeycloakConfigComponent({ config, onConfigChange }: Keyc
         </div>
         <div>
           <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-            Keycloak Configuration
+            Keycloak-Konfiguration
           </h3>
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            Connect to your Keycloak instance
+            Verbinden Sie sich mit Ihrer Keycloak-Instanz
           </p>
         </div>
       </div>
@@ -83,7 +83,7 @@ export default function KeycloakConfigComponent({ config, onConfigChange }: Keyc
           
           <div>
             <label htmlFor="username" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              Username
+              Benutzername
             </label>
             <input
               type="text"
@@ -99,7 +99,7 @@ export default function KeycloakConfigComponent({ config, onConfigChange }: Keyc
         
         <div>
           <label htmlFor="password" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-            Password
+            Passwort
           </label>
           <div className="relative">
             <input
@@ -136,9 +136,9 @@ export default function KeycloakConfigComponent({ config, onConfigChange }: Keyc
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.98-.833-2.75 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
           </svg>
           <div>
-            <h4 className="text-sm font-medium text-amber-900 dark:text-amber-100 mb-1">Security Notice</h4>
+            <h4 className="text-sm font-medium text-amber-900 dark:text-amber-100 mb-1">Sicherheitshinweis</h4>
             <p className="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
-              Configuration is stored only in your browser session. Never share credentials or commit them to version control.
+              Die Konfiguration wird nur in Ihrer Browser-Session gespeichert. Teilen Sie niemals Anmeldedaten oder fügen Sie sie zur Versionskontrolle hinzu.
             </p>
           </div>
         </div>

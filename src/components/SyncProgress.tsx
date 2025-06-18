@@ -45,7 +45,7 @@ export default function SyncProgress({ results, totalUsers, isComplete, isDryRun
             <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
             </svg>
-            TEST MODE
+TESTMODUS
           </span>
         )}
       </div>
@@ -107,7 +107,7 @@ export default function SyncProgress({ results, totalUsers, isComplete, isDryRun
                     ? 'text-green-900 dark:text-green-100' 
                     : 'text-amber-900 dark:text-amber-100'
                 }`}>
-                  {failed === 0 ? 'Success!' : 'Completed with Issues'}
+                  {failed === 0 ? 'Erfolgreich!' : 'Mit Problemen abgeschlossen'}
                 </h4>
                 <p className={`text-sm ${
                   failed === 0 
@@ -115,8 +115,8 @@ export default function SyncProgress({ results, totalUsers, isComplete, isDryRun
                     : 'text-amber-700 dark:text-amber-300'
                 }`}>
                   {failed === 0 
-                    ? (isDryRun ? 'Test run completed successfully!' : 'All users synced successfully!')
-                    : (isDryRun ? `Test run completed with ${failed} simulated failures` : `Sync completed with ${failed} failures`)
+                    ? (isDryRun ? 'Testlauf erfolgreich abgeschlossen!' : 'Alle Benutzer erfolgreich synchronisiert!')
+                    : (isDryRun ? `Testlauf mit ${failed} simulierten Fehlern abgeschlossen` : `Synchronisation mit ${failed} Fehlern abgeschlossen`)
                   }
                 </p>
               </div>
@@ -132,7 +132,7 @@ export default function SyncProgress({ results, totalUsers, isComplete, isDryRun
                   <svg className="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
-                  Run Actual Sync to Keycloak
+                  Echte Synchronisation zu Keycloak ausführen
                 </button>
               </div>
             )}
@@ -147,16 +147,16 @@ export default function SyncProgress({ results, totalUsers, isComplete, isDryRun
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.98-.833-2.75 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
               </svg>
               <div>
-                <h4 className="text-sm font-medium text-amber-900 dark:text-amber-100 mb-2">Test Run Issues</h4>
+                <h4 className="text-sm font-medium text-amber-900 dark:text-amber-100 mb-2">Testlauf-Probleme</h4>
                 <p className="text-sm text-amber-700 dark:text-amber-300 mb-3">
-                  Some users had validation issues in the test run. Please review the errors above and adjust your selection or data before running the actual sync.
+                  Einige Benutzer hatten Validierungsprobleme im Testlauf. Bitte überprüfen Sie die obigen Fehler und passen Sie Ihre Auswahl oder Daten an, bevor Sie die echte Synchronisation ausführen.
                 </p>
                 {onRunActualSync && (
                   <button
                     onClick={onRunActualSync}
                     className="btn-secondary text-sm px-4 py-2 rounded-lg"
                   >
-                    Proceed with Actual Sync Anyway
+                    Trotzdem mit echter Synchronisation fortfahren
                   </button>
                 )}
               </div>
@@ -170,13 +170,13 @@ export default function SyncProgress({ results, totalUsers, isComplete, isDryRun
               <svg className="w-4 h-4 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              Failed Operations
+              Fehlgeschlagene Vorgänge
             </h4>
             <div className="max-h-40 overflow-y-auto space-y-2">
               {results.filter(r => !r.success).map((result, index) => (
                 <div key={index} className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
                   <div className="text-sm">
-                    <span className="font-medium text-red-900 dark:text-red-100">User {result.userId}:</span>
+                    <span className="font-medium text-red-900 dark:text-red-100">Benutzer {result.userId}:</span>
                     <span className="text-red-700 dark:text-red-300 ml-1">{result.error}</span>
                   </div>
                 </div>

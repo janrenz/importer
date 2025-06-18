@@ -8,10 +8,10 @@ import CSVFieldMapper from './CSVFieldMapper';
 import SyncProgress from './SyncProgress';
 
 const AVAILABLE_ATTRIBUTES: SyncableAttribute[] = [
-  { key: 'firstName', label: 'First Name', required: true },
-  { key: 'lastName', label: 'Last Name', required: true },
-  { key: 'email', label: 'Email Address', required: true },
-  { key: 'userType', label: 'User Type (Student/Teacher)', required: true },
+  { key: 'firstName', label: 'Vorname', required: true },
+  { key: 'lastName', label: 'Nachname', required: true },
+  { key: 'email', label: 'E-Mail-Adresse', required: true },
+  { key: 'userType', label: 'Benutzertyp (Schüler/Lehrer)', required: true },
 ];
 
 interface ManualUser {

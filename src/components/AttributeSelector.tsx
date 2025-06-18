@@ -23,10 +23,10 @@ export default function AttributeSelector({
         </div>
         <div>
           <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-            Sync Attributes
+            Attribute auswählen
           </h3>
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            Choose attributes to synchronize
+            Wählen Sie die zu synchronisierenden Attribute aus
           </p>
         </div>
       </div>
@@ -53,7 +53,7 @@ export default function AttributeSelector({
                   </span>
                   {attribute.required && (
                     <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300">
-                      Required
+                      Erforderlich
                     </span>
                   )}
                 </div>
@@ -69,9 +69,9 @@ export default function AttributeSelector({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <div>
-            <h4 className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-1">Attribute Info</h4>
+            <h4 className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-1">Attribut-Information</h4>
             <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              Required attributes are automatically included. Optional attributes will be stored as custom user attributes in Keycloak.
+              Erforderliche Attribute werden automatisch eingefügt. Optionale Attribute werden als benutzerdefinierte Attribute in Keycloak gespeichert.
             </p>
           </div>
         </div>

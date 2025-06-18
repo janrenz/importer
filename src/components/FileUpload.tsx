@@ -21,14 +21,14 @@ export default function FileUpload({ onUsersLoaded }: FileUploadProps) {
 
     // Validate file type
     if (!file.name.toLowerCase().endsWith('.xml')) {
-      setError('Please select an XML file.');
+      setError('Bitte wählen Sie eine XML-Datei aus.');
       setIsProcessing(false);
       return;
     }
 
     // Validate file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
-      setError('File is too large. Please select a file smaller than 10MB.');
+      setError('Datei ist zu groß. Bitte wählen Sie eine Datei kleiner als 10MB aus.');
       setIsProcessing(false);
       return;
     }
@@ -43,7 +43,7 @@ export default function FileUpload({ onUsersLoaded }: FileUploadProps) {
       console.log('Parsed users:', users.length);
       
       if (users.length === 0) {
-        setError('No valid users found in the XML file. Please ensure the file contains student or teacher data in the correct SchILD/Logineo format.');
+        setError('Keine gültigen Benutzer in der XML-Datei gefunden. Stellen Sie sicher, dass die Datei Schüler- oder Lehrerdaten im korrekten SchILD/Logineo-Format enthält.');
         setIsProcessing(false);
         return;
       }
@@ -51,17 +51,17 @@ export default function FileUpload({ onUsersLoaded }: FileUploadProps) {
       onUsersLoaded(users);
     } catch (error) {
       console.error('Error parsing XML file:', error);
-      let errorMessage = 'Unable to parse the XML file.';
+      let errorMessage = 'XML-Datei konnte nicht verarbeitet werden.';
       
       if (error instanceof Error) {
         if (error.message.includes('Invalid XML format')) {
-          errorMessage = 'The file contains invalid XML. Please check that the file is not corrupted.';
+          errorMessage = 'Die Datei enthält ungültiges XML. Bitte überprüfen Sie, dass die Datei nicht beschädigt ist.';
         } else {
-          errorMessage = `Parsing error: ${error.message}`;
+          errorMessage = `Verarbeitungsfehler: ${error.message}`;
         }
       }
       
-      errorMessage += ' Please ensure you have uploaded a valid SchILD/Logineo XML export file.';
+      errorMessage += ' Stellen Sie sicher, dass Sie eine gültige SchILD/Logineo XML-Export-Datei hochgeladen haben.';
       setError(errorMessage);
     }
     
@@ -101,12 +101,12 @@ export default function FileUpload({ onUsersLoaded }: FileUploadProps) {
               )}
             </div>
             <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-3">
-              {isProcessing ? 'Processing File...' : 'Upload XML File'}
+              {isProcessing ? 'Datei wird verarbeitet...' : 'XML-Datei hochladen'}
             </h3>
             <p className="text-slate-600 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
               {isProcessing 
-                ? 'Please wait while we process your XML file'
-                : 'Select your SchILD/Logineo XML export file to import and sync user data with Keycloak'
+                ? 'Bitte warten Sie, während wir Ihre XML-Datei verarbeiten'
+                : 'Wählen Sie Ihre SchILD/Logineo XML-Export-Datei aus, um Benutzerdaten zu importieren und mit Keycloak zu synchronisieren'
               }
             </p>
           </div>
@@ -118,7 +118,7 @@ export default function FileUpload({ onUsersLoaded }: FileUploadProps) {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <div>
-                  <h4 className="text-sm font-medium text-red-900 dark:text-red-100 mb-1">Upload Error</h4>
+                  <h4 className="text-sm font-medium text-red-900 dark:text-red-100 mb-1">Upload-Fehler</h4>
                   <p className="text-sm text-red-700 dark:text-red-300 leading-relaxed">{error}</p>
                 </div>
               </div>
@@ -144,7 +144,7 @@ export default function FileUpload({ onUsersLoaded }: FileUploadProps) {
               <svg className={`w-5 h-5 mr-2 inline ${isProcessing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={isProcessing ? "M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" : "M12 4v16m8-8H4"} />
               </svg>
-              {isProcessing ? 'Processing...' : 'Choose File'}
+              {isProcessing ? 'Verarbeitung...' : 'Datei auswählen'}
             </button>
           </div>
           
@@ -154,7 +154,7 @@ export default function FileUpload({ onUsersLoaded }: FileUploadProps) {
                 <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
-                <span>XML Format</span>
+                <span>XML-Format</span>
               </div>
               <div className="flex items-center space-x-2 text-sm text-slate-500 dark:text-slate-400">
                 <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
