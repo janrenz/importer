@@ -1,0 +1,6 @@
+GivenName,FamilyName,E-Mail,UserType
+Maria,García,maria.garcia@schule.de,Teacher
+Hans,Berger,hans.berger@schule.de,Instructor
+Lisa,Keller,lisa.keller@student.schule.de,Learner
+David,Schulz,david.schulz@schule.de,Faculty
+Sophie,Frank,sophie.frank@student.schule.de,Student

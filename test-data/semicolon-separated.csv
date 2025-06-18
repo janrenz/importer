@@ -1,0 +1,6 @@
+Vorname;Nachname;"E-Mail Adresse";Benutzertyp;Abteilung
+"Markus";"König";markus.koenig@schule.de;"Lehrer";"Informatik"
+"Laura";"Huber";"laura.huber@schule.de";"Lehrerin";"Englisch"
+"Tim";"Kraus";"tim.kraus@student.schule.de";"Schüler";"9A"
+"Jana";"Weiß";;"Schülerin";"10C"
+"Thomas";"Schmitt";"thomas.schmitt@schule.de";"Lehrkraft";"Sport"

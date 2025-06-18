@@ -1,0 +1,6 @@
+ID,PersonalName,DigitalContact,Classification,Unit
+A001,Maria García Teacher,maria.garcia@schule.de,Staff Member,Math Dept
+A002,Hans Berger Instructor,hans.berger@schule.de,Education Personnel,Science Dept
+S001,Lisa Keller Student,lisa.keller@student.schule.de,Learner,Grade 10
+S002,David Schulz Pupil,david.schulz@student.schule.de,Enrolled,Grade 11
+A003,Sophie Frank Professor,sophie.frank@schule.de,Academic,English Dept

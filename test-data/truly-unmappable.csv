@@ -1,0 +1,7 @@
+PersonID,FullName,ContactInfo,JobCategory,Department
+001,Dr. Klaus Schneider,k.schneider@schule.de,Academic Staff,Mathematics
+002,Sandra Meyer,sandra.meyer@schule.de,Teaching Personnel,German Literature
+003,Alex Bauer,alex.bauer@student.schule.de,Enrolled Student,
+004,Emma Wolf,emma.wolf@student.schule.de,Student Body,
+005,Robert Zimmermann,r.zimmermann@schule.de,Faculty Member,Physics
+006,Nina Braun,,Apprentice,Administration

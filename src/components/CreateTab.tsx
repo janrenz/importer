@@ -3,6 +3,8 @@
 import React, { useState, useCallback } from 'react';
 import { User, KeycloakConfig, SyncableAttribute } from '@/types';
 import { KeycloakClient } from '@/lib/keycloakClient';
+import { parseCSVFile, generateMappingReport, processCSVWithMapping } from '@/lib/csvParser';
+import CSVFieldMapper from './CSVFieldMapper';
 import SyncProgress from './SyncProgress';
 
 const AVAILABLE_ATTRIBUTES: SyncableAttribute[] = [
@@ -40,6 +42,19 @@ export default function CreateTab({ keycloakConfig, isKeycloakAuthenticated }: C
   const [syncResults, setSyncResults] = useState<SyncResult[]>([]);
   const [syncComplete, setSyncComplete] = useState(false);
   const [isDryRun, setIsDryRun] = useState(false);
+  const [csvUploadStatus, setCsvUploadStatus] = useState<{
+    isProcessing: boolean;
+    error: string | null;
+    lastMapping: string | null;
+    importedCount: number;
+  }>({ isProcessing: false, error: null, lastMapping: null, importedCount: 0 });
+  const [fieldMappingDialog, setFieldMappingDialog] = useState<{
+    isOpen: boolean;
+    csvContent: string;
+    headers: string[];
+    autoMapping: Record<string, number>;
+    sampleData: string[][];
+  }>({ isOpen: false, csvContent: '', headers: [], autoMapping: {}, sampleData: [] });
 
   const addRow = useCallback(() => {
     const newId = (Math.max(...manualUsers.map(u => parseInt(u.id))) + 1).toString();
@@ -71,6 +86,163 @@ export default function CreateTab({ keycloakConfig, isKeycloakAuthenticated }: C
     // Reset sync state when data changes
     setSyncResults([]);
     setSyncComplete(false);
+    // Also reset CSV status when manual data changes
+    setCsvUploadStatus(prev => ({ ...prev, error: null }));
+  }, []);
+
+  const handleCSVUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setCsvUploadStatus({ isProcessing: true, error: null, lastMapping: null, importedCount: 0 });
+
+    // Validate file type
+    if (!file.name.toLowerCase().endsWith('.csv')) {
+      setCsvUploadStatus({ isProcessing: false, error: 'Bitte wählen Sie eine CSV-Datei aus.', lastMapping: null, importedCount: 0 });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setCsvUploadStatus({ isProcessing: false, error: 'Datei ist zu groß. Bitte wählen Sie eine Datei kleiner als 5MB.', lastMapping: null, importedCount: 0 });
+      return;
+    }
+
+    try {
+      const text = await file.text();
+      const { users, mapping, errors, headers, sampleData, needsManualMapping } = parseCSVFile(text);
+      
+      // If automatic mapping is insufficient, show manual mapping dialog
+      if (needsManualMapping) {
+        setFieldMappingDialog({
+          isOpen: true,
+          csvContent: text,
+          headers,
+          autoMapping: mapping,
+          sampleData
+        });
+        setCsvUploadStatus({ isProcessing: false, error: null, lastMapping: null, importedCount: 0 });
+        return;
+      }
+      
+      // Convert CSV users to manual users format
+      const startId = Math.max(...manualUsers.map(u => parseInt(u.id)), 0) + 1;
+      const newUsers = users.map((user, index) => ({
+        id: (startId + index).toString(),
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        userType: user.userType
+      }));
+
+      // Add to existing users or replace if starting fresh
+      if (manualUsers.length === 1 && !manualUsers[0].firstName && !manualUsers[0].lastName && !manualUsers[0].email) {
+        // Replace the empty initial row
+        setManualUsers(newUsers);
+      } else {
+        // Add to existing users
+        setManualUsers(prev => [...prev, ...newUsers]);
+      }
+
+      // Generate mapping report
+      const mappingReport = generateMappingReport(mapping, Object.keys(mapping));
+      
+      // Prepare status message
+      let statusMessage = `${users.length} Benutzer erfolgreich importiert.`;
+      if (errors.length > 0) {
+        statusMessage += ` ${errors.length} Warnungen aufgetreten.`;
+      }
+
+      setCsvUploadStatus({
+        isProcessing: false,
+        error: errors.length > 0 ? errors.join('\n') : null,
+        lastMapping: mappingReport,
+        importedCount: users.length
+      });
+
+      // Reset sync state
+      setSyncResults([]);
+      setSyncComplete(false);
+
+    } catch (error) {
+      setCsvUploadStatus({
+        isProcessing: false,
+        error: error instanceof Error ? error.message : 'Fehler beim Verarbeiten der CSV-Datei.',
+        lastMapping: null,
+        importedCount: 0
+      });
+    } finally {
+      // Reset file input
+      event.target.value = '';
+    }
+  }, [manualUsers]);
+
+  const handleManualMapping = useCallback(async (customMapping: Record<string, number>) => {
+    setCsvUploadStatus({ isProcessing: true, error: null, lastMapping: null, importedCount: 0 });
+    
+    try {
+      const { users, errors } = processCSVWithMapping(fieldMappingDialog.csvContent, customMapping);
+      
+      // Convert CSV users to manual users format
+      const startId = Math.max(...manualUsers.map(u => parseInt(u.id)), 0) + 1;
+      const newUsers = users.map((user, index) => ({
+        id: (startId + index).toString(),
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        userType: user.userType
+      }));
+
+      // Add to existing users or replace if starting fresh
+      if (manualUsers.length === 1 && !manualUsers[0].firstName && !manualUsers[0].lastName && !manualUsers[0].email) {
+        // Replace the empty initial row
+        setManualUsers(newUsers);
+      } else {
+        // Add to existing users
+        setManualUsers(prev => [...prev, ...newUsers]);
+      }
+
+      // Generate mapping report
+      const mappingReport = generateMappingReport(customMapping, fieldMappingDialog.headers);
+      
+      setCsvUploadStatus({
+        isProcessing: false,
+        error: errors.length > 0 ? errors.join('\n') : null,
+        lastMapping: mappingReport,
+        importedCount: users.length
+      });
+
+      // Reset sync state
+      setSyncResults([]);
+      setSyncComplete(false);
+      
+      // Close dialog
+      setFieldMappingDialog({ isOpen: false, csvContent: '', headers: [], autoMapping: {}, sampleData: [] });
+
+    } catch (error) {
+      setCsvUploadStatus({
+        isProcessing: false,
+        error: error instanceof Error ? error.message : 'Fehler beim Verarbeiten der CSV-Datei.',
+        lastMapping: null,
+        importedCount: 0
+      });
+      setFieldMappingDialog({ isOpen: false, csvContent: '', headers: [], autoMapping: {}, sampleData: [] });
+    }
+  }, [fieldMappingDialog.csvContent, fieldMappingDialog.headers, manualUsers]);
+
+  const handleMappingDialogClose = useCallback(() => {
+    setFieldMappingDialog({ isOpen: false, csvContent: '', headers: [], autoMapping: {}, sampleData: [] });
+    setCsvUploadStatus({ isProcessing: false, error: null, lastMapping: null, importedCount: 0 });
+  }, []);
+
+  const clearAllUsers = useCallback(() => {
+    const confirmClear = confirm('Möchten Sie alle Benutzer aus der Tabelle entfernen?');
+    if (confirmClear) {
+      setManualUsers([{ id: '1', firstName: '', lastName: '', email: '', userType: 'teacher' }]);
+      setSyncResults([]);
+      setSyncComplete(false);
+      setCsvUploadStatus({ isProcessing: false, error: null, lastMapping: null, importedCount: 0 });
+    }
   }, []);
 
   const validateUsers = useCallback(() => {
@@ -186,20 +358,84 @@ export default function CreateTab({ keycloakConfig, isKeycloakAuthenticated }: C
                     Benutzer manuell erstellen
                   </h2>
                   <p className="text-sm text-slate-600 dark:text-slate-400">
-                    Geben Sie Benutzerdaten direkt ein und synchronisieren Sie sie mit Keycloak
+                    Geben Sie Benutzerdaten direkt ein oder importieren Sie eine CSV-Datei
                   </p>
                 </div>
               </div>
-              <button
-                onClick={addRow}
-                className="btn-primary text-sm px-3 py-2"
-              >
-                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                Zeile hinzufügen
-              </button>
+              <div className="flex items-center space-x-2">
+                <label className="btn-secondary text-sm px-3 py-2 cursor-pointer">
+                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                  </svg>
+                  {csvUploadStatus.isProcessing ? 'Verarbeite...' : 'CSV importieren'}
+                  <input
+                    type="file"
+                    accept=".csv"
+                    onChange={handleCSVUpload}
+                    disabled={csvUploadStatus.isProcessing}
+                    className="hidden"
+                  />
+                </label>
+                <button
+                  onClick={addRow}
+                  className="btn-primary text-sm px-3 py-2"
+                >
+                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  Zeile hinzufügen
+                </button>
+                {manualUsers.length > 1 && (
+                  <button
+                    onClick={clearAllUsers}
+                    className="text-red-600 hover:text-red-700 text-sm px-3 py-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                    title="Alle Benutzer löschen"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                )}
+              </div>
             </div>
+
+            {/* CSV Upload Status */}
+            {csvUploadStatus.importedCount > 0 && (
+              <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                <div className="flex items-center space-x-2 text-sm">
+                  <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-green-800 dark:text-green-200">
+                    {csvUploadStatus.importedCount} Benutzer aus CSV importiert
+                  </span>
+                </div>
+                {csvUploadStatus.lastMapping && (
+                  <details className="mt-2">
+                    <summary className="text-xs text-green-700 dark:text-green-300 cursor-pointer hover:text-green-800 dark:hover:text-green-200">
+                      Felderzuordnung anzeigen
+                    </summary>
+                    <pre className="mt-2 text-xs text-green-700 dark:text-green-300 whitespace-pre-wrap font-mono">
+                      {csvUploadStatus.lastMapping}
+                    </pre>
+                  </details>
+                )}
+              </div>
+            )}
+
+            {csvUploadStatus.error && (
+              <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                <div className="flex items-start space-x-2">
+                  <svg className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.98-.833-2.75 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                  <div>
+                    <h4 className="text-sm font-medium text-amber-800 dark:text-amber-200 mb-1">CSV Import Warnungen:</h4>
+                    <pre className="text-xs text-amber-700 dark:text-amber-300 whitespace-pre-wrap">{csvUploadStatus.error}</pre>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -384,6 +620,16 @@ export default function CreateTab({ keycloakConfig, isKeycloakAuthenticated }: C
           )}
         </div>
       </div>
+
+      {/* CSV Field Mapping Dialog */}
+      <CSVFieldMapper
+        isOpen={fieldMappingDialog.isOpen}
+        onClose={handleMappingDialogClose}
+        onConfirm={handleManualMapping}
+        headers={fieldMappingDialog.headers}
+        autoMapping={fieldMappingDialog.autoMapping}
+        sampleData={fieldMappingDialog.sampleData}
+      />
     </div>
   );
 }
