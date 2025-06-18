@@ -29,7 +29,7 @@ export default function Footer() {
             </a>
             
             <div className="text-xs text-slate-500 dark:text-slate-500">
-              v1.0.0
+              v0.1.0
             </div>
           </div>
         </div>
