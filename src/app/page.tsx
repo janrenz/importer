@@ -11,11 +11,11 @@ import FileUpload from '@/components/FileUpload';
 import { User, KeycloakConfig } from '@/types';
 import { KeycloakClient } from '@/lib/keycloakClient';
 
-type TabType = 'import' | 'create' | 'delete' | 'help' | 'logout';
+type TabType = 'start' | 'import' | 'create' | 'delete' | 'principal' | 'help' | 'logout';
 
 export default function HomePage() {
   const [users, setUsers] = useState<User[]>([]);
-  const [activeTab, setActiveTab] = useState<TabType>('import');
+  const [activeTab, setActiveTab] = useState<TabType>('start');
   const [keycloakConfig, setKeycloakConfig] = useState<KeycloakConfig>({
     url: '',
     realm: 'master',
@@ -45,6 +45,24 @@ export default function HomePage() {
   }, []);
 
   const tabs = [
+    {
+      id: 'start' as TabType,
+      label: 'Startseite',
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+        </svg>
+      ),
+    },
+    {
+      id: 'principal' as TabType,
+      label: 'Schulleiter einrichten',
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+      ),
+    },
     {
       id: 'import' as TabType,
       label: 'SchILD Import',
@@ -85,6 +103,277 @@ export default function HomePage() {
 
   const renderTabContent = () => {
     switch (activeTab) {
+      case 'start':
+        return (
+          <div className="max-w-4xl mx-auto space-y-12">
+            {/* Welcome Section */}
+            <div className="text-center space-y-6">
+              <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl flex items-center justify-center mx-auto">
+                <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
+                </svg>
+              </div>
+              <div>
+                <h1 className="text-4xl font-bold text-slate-900 dark:text-slate-100 mb-4">
+                  Willkommen bei SchILD Sync
+                </h1>
+                <p className="text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
+                  Synchronisieren Sie Benutzer aus SchILD/Logineo XML-Exporten mit Ihrem Keycloak Identity Management System
+                </p>
+              </div>
+            </div>
+
+            {/* Process Steps */}
+            <div className="space-y-8">
+              <div className="text-center">
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">
+                  Einrichtungsprozess
+                </h2>
+                <p className="text-slate-600 dark:text-slate-400">
+                  Folgen Sie diesen Schritten zur erfolgreichen Einrichtung
+                </p>
+              </div>
+
+              <div className="grid md:grid-cols-3 gap-8">
+                {/* Step 1 */}
+                <div className="card p-6 text-center group hover:shadow-lg transition-all duration-300">
+                  <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                    <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">1</span>
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+                    Schulleiter anlegen
+                  </h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                    Erstellen Sie zunächst einmalig einen Administrator-Account für die Schulleitung über den entsprechenden Tab.
+                  </p>
+                </div>
+
+                {/* Step 2 */}
+                <div className="card p-6 text-center group hover:shadow-lg transition-all duration-300">
+                  <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                    <span className="text-2xl font-bold text-green-600 dark:text-green-400">2</span>
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+                    Als Schulleiter anmelden
+                  </h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                    Melden Sie sich mit dem erstellten Schulleiter-Account in Keycloak an und konfigurieren Sie die Verbindungsdaten in der Seitenleiste.
+                  </p>
+                </div>
+
+                {/* Step 3 */}
+                <div className="card p-6 text-center group hover:shadow-lg transition-all duration-300">
+                  <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                    <span className="text-2xl font-bold text-purple-600 dark:text-purple-400">3</span>
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+                    Benutzer importieren
+                  </h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                    Importieren Sie Lehrer und Schüler über XML-Upload oder manuelle CSV-Erstellung.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-2xl p-8">
+              <div className="text-center mb-6">
+                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">
+                  Schnellstart
+                </h3>
+                <p className="text-slate-600 dark:text-slate-400">
+                  Beginnen Sie mit einem dieser Schritte
+                </p>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <button
+                  onClick={() => setActiveTab('principal')}
+                  className="flex items-center justify-center space-x-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors shadow-lg hover:shadow-xl"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  <span>Schulleiter einrichten</span>
+                </button>
+                
+                <button
+                  onClick={() => setActiveTab('import')}
+                  className="flex items-center justify-center space-x-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors shadow-lg hover:shadow-xl"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                  </svg>
+                  <span>XML importieren</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Features Overview */}
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="card p-6">
+                <div className="flex items-start space-x-3">
+                  <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">
+                      Sichere Verarbeitung
+                    </h4>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                      Alle Daten werden lokal in Ihrem Browser verarbeitet. Keine Übertragung an externe Server.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="card p-6">
+                <div className="flex items-start space-x-3">
+                  <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">
+                      Flexible Importoptionen
+                    </h4>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                      Unterstützt SchILD XML-Exporte und CSV-Dateien mit intelligenter Felderkennung.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="card p-6">
+                <div className="flex items-start space-x-3">
+                  <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <svg className="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">
+                      Testmodus verfügbar
+                    </h4>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                      Testen Sie Ihre Synchronisation vor der eigentlichen Durchführung.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="card p-6">
+                <div className="flex items-start space-x-3">
+                  <div className="w-10 h-10 bg-amber-100 dark:bg-amber-900/30 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <svg className="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">
+                      Selektive Synchronisation
+                    </h4>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                      Wählen Sie einzelne Benutzer und Attribute für den Import aus.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      case 'principal':
+        return (
+          <div className="max-w-2xl mx-auto space-y-6">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+              <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">
+                Schulleiter einrichten
+              </h1>
+              <p className="text-slate-600 dark:text-slate-400">
+                Erstellen Sie einen Administrator-Account für die Schulleitung
+              </p>
+            </div>
+
+            <div className="card p-6 space-y-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Vorname *
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    placeholder="Max"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Nachname *
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    placeholder="Mustermann"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    E-Mail-Adresse *
+                  </label>
+                  <input
+                    type="email"
+                    className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    placeholder="max.mustermann@schule.de"
+                  />
+                </div>
+              </div>
+
+              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <div className="flex items-start space-x-3">
+                  <svg className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div>
+                    <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">
+                      Administrator-Rechte
+                    </h4>
+                    <p className="text-sm text-blue-700 dark:text-blue-300 leading-relaxed">
+                      Der Schulleiter-Account erhält vollständige Administrator-Rechte für die Nutzer seiner Schule in Keycloak und kann alle Benutzer dieser Schule verwalten.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end space-x-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+                <button
+                  onClick={() => setActiveTab('start')}
+                  className="px-6 py-3 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 font-medium transition-colors"
+                >
+                  Zurück
+                </button>
+                <button
+                  className="flex items-center space-x-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors shadow-lg hover:shadow-xl"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  <span>Schulleiter anlegen</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        );
       case 'import':
         return (
           <ImportTab
