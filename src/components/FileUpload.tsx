@@ -72,7 +72,7 @@ export default function FileUpload({ onUsersLoaded }: FileUploadProps) {
 
   return (
     <div className="relative">
-      <div className={`card p-8 sm:p-12 text-center transition-all duration-300 border-2 border-dashed animate-bounce-in ${
+      <div className={`card p-6 sm:p-8 text-center transition-all duration-300 border-2 border-dashed animate-bounce-in ${
         error 
           ? 'border-red-400 dark:border-red-500 bg-red-50 dark:bg-red-900/10' 
           : 'border-slate-300 dark:border-slate-600 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-lg'

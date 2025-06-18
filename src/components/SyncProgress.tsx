@@ -23,8 +23,8 @@ export default function SyncProgress({ results, totalUsers, isComplete, isDryRun
   const progress = (results.length / totalUsers) * 100;
 
   return (
-    <div className="card p-6 animate-bounce-in">
-      <div className="flex items-center justify-between mb-6">
+    <div className="card p-4 animate-bounce-in">
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center animate-pulse">
             <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

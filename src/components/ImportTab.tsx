@@ -156,9 +156,9 @@ export default function ImportTab({ keycloakConfig, isKeycloakAuthenticated, use
   const canTest = selectedUsers.size > 0 && !isSyncing;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {users.length === 0 ? (
-        <div className="card p-8 text-center">
+        <div className="card p-6 text-center">
           <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
@@ -174,7 +174,7 @@ export default function ImportTab({ keycloakConfig, isKeycloakAuthenticated, use
       ) : (
         <>
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 lg:gap-8">
-            <div className="xl:col-span-2 space-y-6">
+            <div className="xl:col-span-2 space-y-4">
               <div className="animate-slide-up" style={{animationDelay: '0.1s'}}>
                 <AttributeSelector
                   availableAttributes={AVAILABLE_ATTRIBUTES}
@@ -194,7 +194,7 @@ export default function ImportTab({ keycloakConfig, isKeycloakAuthenticated, use
                   onRunActualSync={isDryRun && syncComplete ? () => handleSync(false) : undefined}
                 />
               ) : (
-                <div className="card p-6 sticky top-24">
+                <div className="card p-4 sticky top-24">
                   <div className="text-center space-y-4">
                     <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto">
                       <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

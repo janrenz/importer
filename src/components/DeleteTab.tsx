@@ -136,9 +136,9 @@ export default function DeleteTab({ keycloakConfig, xmlUsers, isKeycloakAuthenti
   }, [keycloakConfig, usersToDelete, selectedUsers, findOldUsers]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {xmlUsers.length === 0 ? (
-        <div className="card p-8 text-center">
+        <div className="card p-6 text-center">
           <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -153,7 +153,7 @@ export default function DeleteTab({ keycloakConfig, xmlUsers, isKeycloakAuthenti
         </div>
       ) : (
         <>
-      <div className="card p-6">
+      <div className="card p-4">
         <div className="flex items-center space-x-3 mb-4">
           <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-pink-600 rounded-xl flex items-center justify-center">
             <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -243,7 +243,7 @@ export default function DeleteTab({ keycloakConfig, xmlUsers, isKeycloakAuthenti
 
       {usersToDelete.length > 0 && (
         <div className="space-y-4">
-          <div className="card p-4">
+          <div className="card p-3">
             <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
               Gefundene veraltete Benutzer
             </h3>
@@ -263,7 +263,7 @@ export default function DeleteTab({ keycloakConfig, xmlUsers, isKeycloakAuthenti
       )}
 
       {deleteResults.length > 0 && (
-        <div className="card p-6">
+        <div className="card p-4">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">
             Löschvorgang Ergebnisse
           </h3>

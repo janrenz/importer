@@ -102,7 +102,7 @@ export default function UserList({
         </div>
 
         {/* Filters */}
-        <div className="card p-4">
+        <div className="card p-3">
           <div className="flex flex-col gap-4">
             {/* Search */}
             <div className="flex-1">
@@ -198,7 +198,7 @@ export default function UserList({
 
       {/* Student Notice */}
       {studentsCount > 0 && (
-        <div className="card p-4 bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800">
+        <div className="card p-3 bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800">
           <div className="flex items-start space-x-3">
             <svg className="w-5 h-5 text-orange-600 dark:text-orange-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.86-.833-2.63 0L4.184 16.5c-.77.833.192 2.5 1.732 2.5z" />
@@ -230,7 +230,7 @@ export default function UserList({
             const isDisabled = isStudentDisabled || hasNoEmail;
             return (
             <div key={user.id} className="animate-fade-in" style={{animationDelay: `${index * 0.05}s`}}>
-              <div className={`card p-5 transition-all duration-200 ${
+              <div className={`card p-4 transition-all duration-200 ${
                 isDisabled 
                   ? 'opacity-60 cursor-not-allowed bg-slate-100 dark:bg-slate-800' 
                   : `cursor-pointer hover:shadow-lg hover:scale-[1.02] ${

@@ -14,8 +14,8 @@ export default function AttributeSelector({
   onSelectionChange 
 }: AttributeSelectorProps) {
   return (
-    <div className="card p-6">
-      <div className="flex items-center space-x-3 mb-6">
+    <div className="card p-4">
+      <div className="flex items-center space-x-3 mb-4">
         <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center">
           <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
