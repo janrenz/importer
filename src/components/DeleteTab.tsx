@@ -137,6 +137,22 @@ export default function DeleteTab({ keycloakConfig, xmlUsers, isKeycloakAuthenti
 
   return (
     <div className="space-y-6">
+      {xmlUsers.length === 0 ? (
+        <div className="card p-8 text-center">
+          <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+            XML-Datei laden
+          </h3>
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            Laden Sie eine SchILD/Logineo XML-Datei oben, um veraltete Benutzer zu finden und zu löschen.
+          </p>
+        </div>
+      ) : (
+        <>
       <div className="card p-6">
         <div className="flex items-center space-x-3 mb-4">
           <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-pink-600 rounded-xl flex items-center justify-center">
@@ -211,7 +227,7 @@ export default function DeleteTab({ keycloakConfig, xmlUsers, isKeycloakAuthenti
         {xmlUsers.length === 0 && (
           <div className="mt-4 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
             <p className="text-amber-800 dark:text-amber-200 text-sm">
-              Bitte laden Sie zuerst eine XML-Datei im Import-Tab, um veraltete Benutzer zu identifizieren.
+              Bitte laden Sie zuerst eine XML-Datei oben, um veraltete Benutzer zu identifizieren.
             </p>
           </div>
         )}
@@ -271,6 +287,8 @@ export default function DeleteTab({ keycloakConfig, xmlUsers, isKeycloakAuthenti
             })}
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   );

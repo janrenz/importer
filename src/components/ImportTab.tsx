@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import FileUpload from './FileUpload';
+import React, { useState, useCallback } from 'react';
 import UserList from './UserList';
 import AttributeSelector from './AttributeSelector';
 import SyncProgress from './SyncProgress';
@@ -41,12 +40,12 @@ export default function ImportTab({ keycloakConfig, isKeycloakAuthenticated, use
   const [syncComplete, setSyncComplete] = useState(false);
   const [isDryRun, setIsDryRun] = useState(false);
 
-  const handleUsersLoaded = useCallback((loadedUsers: User[]) => {
-    onUsersLoaded(loadedUsers);
+  // Reset state when users change
+  React.useEffect(() => {
     setSelectedUsers(new Set());
     setSyncResults([]);
     setSyncComplete(false);
-  }, [onUsersLoaded]);
+  }, [users]);
 
   const handleUserSelection = useCallback((userId: string, selected: boolean) => {
     setSelectedUsers(prev => {
@@ -159,7 +158,19 @@ export default function ImportTab({ keycloakConfig, isKeycloakAuthenticated, use
   return (
     <div className="space-y-8">
       {users.length === 0 ? (
-        <FileUpload onUsersLoaded={handleUsersLoaded} />
+        <div className="card p-8 text-center">
+          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+            XML-Datei laden
+          </h3>
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            Laden Sie eine SchILD/Logineo XML-Datei oben, um mit dem Import zu beginnen.
+          </p>
+        </div>
       ) : (
         <>
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 lg:gap-8">

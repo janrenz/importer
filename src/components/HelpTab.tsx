@@ -142,20 +142,48 @@ export default function HelpTab() {
         <div className="text-sm text-slate-600 dark:text-slate-400">
           <p className="mb-3">Das Tool erwartet XML-Dateien im SchILD/Logineo-Exportformat mit folgender Struktur:</p>
           <pre className="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto text-xs">
-{`<enterprise>
-  <person>
-    <n>
-      <given>Vorname</given>
-      <family>Nachname</family>
-    </n>
-    <email>benutzer@schule.de</email>
-    <institutionrole institutionroletype="Teacher|Student"/>
+{`<enterprise xmlns="http://www.metaventis.com/ns/cockpit/sync/1.0">
+  <properties>
+    <datasource>SCHILDNRW-2.0.32.8</datasource>
+    <target>LOGINEO-3.0.1.14</target>
+    <type>SYNC-1.0</type>
+    <datetime>2025-05-22T14:05:55</datetime>
+  </properties>
+  <person recstatus="1">
+    <sourcedid>
+      <source>SCHILDNRW-2.0.32.8</source>
+      <id>ID-123456-3524</id>
+    </sourcedid>
+    <name>
+      <fn>Bauschen Mike</fn>
+      <n>
+        <family>Bauschen</family>
+        <given>Mike</given>
+      </n>
+    </name>
+    <demographics>
+      <bday>2004-04-28</bday>
+    </demographics>
+    <email>M.Bauschen@smail.de</email>
+    <systemrole systemroletype="User"/>
+    <institutionrole institutionroletype="Student"/>
     <extension>
-      <x-schildnrw-grade>Klasse</x-schildnrw-grade>
+      <x-schildnrw-person-state>2</x-schildnrw-person-state>
+      <x-schildnrw-grade>EF</x-schildnrw-grade>
     </extension>
   </person>
 </enterprise>`}
           </pre>
+          <div className="mt-4 space-y-2">
+            <h4 className="font-medium text-slate-900 dark:text-slate-100">Wichtige XML-Elemente:</h4>
+            <ul className="space-y-1 text-xs">
+              <li><code className="bg-slate-200 dark:bg-slate-700 px-1 rounded">n/given</code> und <code className="bg-slate-200 dark:bg-slate-700 px-1 rounded">n/family</code>: Vor- und Nachname</li>
+              <li><code className="bg-slate-200 dark:bg-slate-700 px-1 rounded">email</code>: E-Mail-Adresse (erforderlich für Synchronisation)</li>
+              <li><code className="bg-slate-200 dark:bg-slate-700 px-1 rounded">institutionrole/@institutionroletype</code>: "Student" oder "Teacher"</li>
+              <li><code className="bg-slate-200 dark:bg-slate-700 px-1 rounded">x-schildnrw-grade</code>: Klassenbezeichnung (z.B. EF, 5, 6, 10)</li>
+              <li><code className="bg-slate-200 dark:bg-slate-700 px-1 rounded">sourcedid/id</code>: Eindeutige SchILD-ID</li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>

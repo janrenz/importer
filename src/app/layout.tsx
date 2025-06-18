@@ -15,7 +15,7 @@ export default function RootLayout({
     <html lang="en" className="scroll-smooth">
       <body className="bg-slate-50 dark:bg-slate-900">
         <div className="min-h-screen">
-          <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          <main className="">
             <div className="animate-fade-in">
               {children}
             </div>

@@ -6,6 +6,7 @@ import DeleteTab from '@/components/DeleteTab';
 import HelpTab from '@/components/HelpTab';
 import SidePanel from '@/components/SidePanel';
 import Footer from '@/components/Footer';
+import FileUpload from '@/components/FileUpload';
 import { User, KeycloakConfig } from '@/types';
 import { KeycloakClient } from '@/lib/keycloakClient';
 
@@ -156,6 +157,13 @@ export default function HomePage() {
               </div>
             </div>
           </div>
+
+          {/* XML Loader - Shared between Import and Delete tabs */}
+          {(activeTab === 'import' || activeTab === 'delete') && users.length === 0 && (
+            <div className="p-4 sm:p-6 lg:p-8 border-b border-slate-200 dark:border-slate-700">
+              <FileUpload onUsersLoaded={handleUsersLoaded} />
+            </div>
+          )}
 
           {/* Tab Content */}
           <div className="flex-1 p-4 sm:p-6 lg:p-8">
