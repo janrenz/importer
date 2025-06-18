@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import ImportTab from '@/components/ImportTab';
+import CreateTab from '@/components/CreateTab';
 import DeleteTab from '@/components/DeleteTab';
 import HelpTab from '@/components/HelpTab';
 import SidePanel from '@/components/SidePanel';
@@ -10,7 +11,7 @@ import FileUpload from '@/components/FileUpload';
 import { User, KeycloakConfig } from '@/types';
 import { KeycloakClient } from '@/lib/keycloakClient';
 
-type TabType = 'import' | 'delete' | 'help';
+type TabType = 'import' | 'create' | 'delete' | 'help';
 
 export default function HomePage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -46,10 +47,19 @@ export default function HomePage() {
   const tabs = [
     {
       id: 'import' as TabType,
-      label: 'Import',
+      label: 'SchILD Import',
       icon: (
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+        </svg>
+      ),
+    },
+    {
+      id: 'create' as TabType,
+      label: 'Erstellen',
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
         </svg>
       ),
     },
@@ -82,6 +92,13 @@ export default function HomePage() {
             isKeycloakAuthenticated={isKeycloakAuthenticated}
             users={users}
             onUsersLoaded={handleUsersLoaded}
+          />
+        );
+      case 'create':
+        return (
+          <CreateTab
+            keycloakConfig={keycloakConfig}
+            isKeycloakAuthenticated={isKeycloakAuthenticated}
           />
         );
       case 'delete':

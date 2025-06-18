@@ -57,6 +57,40 @@ export default function DeleteTab({ keycloakConfig, xmlUsers, isKeycloakAuthenti
     }
   }, [keycloakConfig, xmlUsers, isKeycloakAuthenticated]);
 
+  const loadAllUsers = useCallback(async () => {
+    if (!isKeycloakAuthenticated) {
+      alert('Bitte authentifizieren Sie sich zuerst mit Keycloak.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const client = new KeycloakClient(keycloakConfig);
+      await client.authenticate();
+      
+      const allKeycloakUsers = await client.getAllUsers();
+      setKeycloakUsers(allKeycloakUsers);
+
+      // Filter out the current admin user by username
+      const currentUserEmail = keycloakConfig.username.toLowerCase();
+      const filteredUsers = allKeycloakUsers.filter(user => {
+        // Exclude current user by email or username
+        const userEmail = user.email?.toLowerCase();
+        const userId = user.id?.toLowerCase();
+        return userEmail !== currentUserEmail && userId !== currentUserEmail;
+      });
+
+      setUsersToDelete(filteredUsers);
+      setSelectedUsers(new Set());
+      setDeleteResults([]);
+      setDeleteComplete(false);
+    } catch (error) {
+      alert(`Fehler beim Laden der Benutzer: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [keycloakConfig, isKeycloakAuthenticated]);
+
   const handleUserSelection = useCallback((userId: string, selected: boolean) => {
     setSelectedUsers(prev => {
       const newSet = new Set(prev);
@@ -67,14 +101,23 @@ export default function DeleteTab({ keycloakConfig, xmlUsers, isKeycloakAuthenti
       }
       return newSet;
     });
+    // Reset delete state when selection changes
+    setDeleteResults([]);
+    setDeleteComplete(false);
   }, []);
 
   const handleSelectAll = useCallback((filteredUsers: User[]) => {
     setSelectedUsers(new Set(filteredUsers.map(u => u.id)));
+    // Reset delete state when selection changes
+    setDeleteResults([]);
+    setDeleteComplete(false);
   }, []);
 
   const handleDeselectAll = useCallback(() => {
     setSelectedUsers(new Set());
+    // Reset delete state when selection changes
+    setDeleteResults([]);
+    setDeleteComplete(false);
   }, []);
 
   const handleDeleteUsers = useCallback(async (dryRun: boolean = false) => {
@@ -145,10 +188,10 @@ export default function DeleteTab({ keycloakConfig, xmlUsers, isKeycloakAuthenti
             </svg>
           </div>
           <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
-            XML-Datei laden
+            Benutzer löschen
           </h3>
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            Laden Sie eine SchILD/Logineo XML-Datei oben, um veraltete Benutzer zu finden und zu löschen.
+            Laden Sie eine XML-Datei, um veraltete Benutzer zu finden, oder laden Sie alle Keycloak-Benutzer.
           </p>
         </div>
       ) : (
@@ -198,6 +241,33 @@ export default function DeleteTab({ keycloakConfig, xmlUsers, isKeycloakAuthenti
             )}
           </button>
 
+          <button
+            onClick={loadAllUsers}
+            disabled={isLoading || !isKeycloakAuthenticated}
+            className={`flex items-center px-4 py-2 rounded-lg font-medium transition-all ${
+              isLoading || !isKeycloakAuthenticated
+                ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                : 'btn-secondary'
+            }`}
+          >
+            {isLoading ? (
+              <>
+                <svg className="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Lade Benutzer...
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                </svg>
+                Alle Benutzer laden
+              </>
+            )}
+          </button>
+
           {usersToDelete.length > 0 && selectedUsers.size > 0 && (
             <>
               <button
@@ -224,11 +294,17 @@ export default function DeleteTab({ keycloakConfig, xmlUsers, isKeycloakAuthenti
           )}
         </div>
 
-        {xmlUsers.length === 0 && (
-          <div className="mt-4 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-            <p className="text-amber-800 dark:text-amber-200 text-sm">
-              Bitte laden Sie zuerst eine XML-Datei oben, um veraltete Benutzer zu identifizieren.
-            </p>
+        {xmlUsers.length === 0 && usersToDelete.length === 0 && (
+          <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <div className="space-y-2">
+              <p className="text-blue-800 dark:text-blue-200 text-sm font-medium">
+                Zwei Möglichkeiten zum Löschen von Benutzern:
+              </p>
+              <ul className="text-blue-700 dark:text-blue-300 text-sm space-y-1 ml-4">
+                <li>• <strong>Veraltete Benutzer finden:</strong> Lädt eine SchILD XML-Datei und zeigt Benutzer an, die nicht mehr in der XML vorhanden sind</li>
+                <li>• <strong>Alle Benutzer laden:</strong> Zeigt alle Benutzer aus Keycloak an (außer dem aktuellen Administrator)</li>
+              </ul>
+            </div>
           </div>
         )}
 
@@ -245,10 +321,13 @@ export default function DeleteTab({ keycloakConfig, xmlUsers, isKeycloakAuthenti
         <div className="space-y-4">
           <div className="card p-3">
             <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
-              Gefundene veraltete Benutzer
+              {xmlUsers.length > 0 ? 'Gefundene veraltete Benutzer' : 'Alle Keycloak Benutzer'}
             </h3>
             <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-              Diese {usersToDelete.length} Benutzer sind in Keycloak vorhanden, aber nicht in der aktuellen XML-Datei:
+              {xmlUsers.length > 0 
+                ? `Diese ${usersToDelete.length} Benutzer sind in Keycloak vorhanden, aber nicht in der aktuellen XML-Datei:`
+                : `${usersToDelete.length} Benutzer in Keycloak gefunden (aktueller Administrator ausgeschlossen):`
+              }
             </p>
           </div>
 

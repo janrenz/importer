@@ -27,12 +27,12 @@ export default function HelpTab() {
             <svg className="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
             </svg>
-            Import-Tab
+SchILD Import-Tab
           </h3>
           <div className="space-y-3 text-sm text-slate-600 dark:text-slate-400">
             <div>
-              <h4 className="font-medium text-slate-900 dark:text-slate-100">1. XML-Datei hochladen</h4>
-              <p>Laden Sie eine SchILD/Logineo XML-Export-Datei hoch. Das Tool unterstützt das Standard-Export-Format.</p>
+              <h4 className="font-medium text-slate-900 dark:text-slate-100">1. SchILD XML-Datei hochladen</h4>
+              <p>Laden Sie eine SchILD/Logineo XML-Export-Datei hoch. Das Tool unterstützt das Standard-Export-Format aus SchILD-NRW.</p>
             </div>
             <div>
               <h4 className="font-medium text-slate-900 dark:text-slate-100">2. Benutzer auswählen</h4>
@@ -51,6 +51,33 @@ export default function HelpTab() {
 
         <div className="card p-4">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4 flex items-center">
+            <svg className="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            Erstellen-Tab
+          </h3>
+          <div className="space-y-3 text-sm text-slate-600 dark:text-slate-400">
+            <div>
+              <h4 className="font-medium text-slate-900 dark:text-slate-100">1. Benutzer eingeben</h4>
+              <p>Geben Sie Benutzerdaten direkt in die Tabelle ein: Vorname, Nachname, E-Mail und Benutzertyp.</p>
+            </div>
+            <div>
+              <h4 className="font-medium text-slate-900 dark:text-slate-100">2. Zeilen hinzufügen</h4>
+              <p>Klicken Sie auf "Zeile hinzufügen", um weitere Benutzer zur Tabelle hinzuzufügen.</p>
+            </div>
+            <div>
+              <h4 className="font-medium text-slate-900 dark:text-slate-100">3. Daten validieren</h4>
+              <p>Grüne Punkte zeigen gültige Einträge an. Alle Felder müssen ausgefüllt sein und eine gültige E-Mail enthalten.</p>
+            </div>
+            <div>
+              <h4 className="font-medium text-slate-900 dark:text-slate-100">4. Benutzer erstellen</h4>
+              <p>Führen Sie einen Testlauf durch, bevor Sie die Benutzer tatsächlich in Keycloak erstellen.</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="card p-4">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4 flex items-center">
             <svg className="w-5 h-5 mr-2 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
             </svg>
@@ -58,12 +85,12 @@ export default function HelpTab() {
           </h3>
           <div className="space-y-3 text-sm text-slate-600 dark:text-slate-400">
             <div>
-              <h4 className="font-medium text-slate-900 dark:text-slate-100">1. XML-Datei laden</h4>
-              <p>Stellen Sie sicher, dass eine aktuelle XML-Datei im Import-Tab geladen ist.</p>
+              <h4 className="font-medium text-slate-900 dark:text-slate-100">Option 1: Veraltete Benutzer finden</h4>
+              <p>Laden Sie eine SchILD XML-Datei und klicken Sie auf "Veraltete Benutzer finden". Zeigt Benutzer an, die in Keycloak existieren, aber nicht in der XML-Datei.</p>
             </div>
             <div>
-              <h4 className="font-medium text-slate-900 dark:text-slate-100">2. Veraltete Benutzer finden</h4>
-              <p>Klicken Sie auf "Veraltete Benutzer finden", um Benutzer zu identifizieren, die in Keycloak existieren, aber nicht in der XML-Datei.</p>
+              <h4 className="font-medium text-slate-900 dark:text-slate-100">Option 2: Alle Benutzer laden</h4>
+              <p>Klicken Sie auf "Alle Benutzer laden", um alle Benutzer aus Keycloak anzuzeigen (der aktuelle Administrator wird automatisch ausgeschlossen).</p>
             </div>
             <div>
               <h4 className="font-medium text-slate-900 dark:text-slate-100">3. Benutzer auswählen</h4>

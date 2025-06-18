@@ -57,14 +57,23 @@ export default function ImportTab({ keycloakConfig, isKeycloakAuthenticated, use
       }
       return newSet;
     });
+    // Reset sync state when selection changes
+    setSyncResults([]);
+    setSyncComplete(false);
   }, []);
 
   const handleSelectAll = useCallback((filteredUsers: User[]) => {
     setSelectedUsers(new Set(filteredUsers.map(u => u.id)));
+    // Reset sync state when selection changes
+    setSyncResults([]);
+    setSyncComplete(false);
   }, []);
 
   const handleDeselectAll = useCallback(() => {
     setSelectedUsers(new Set());
+    // Reset sync state when selection changes
+    setSyncResults([]);
+    setSyncComplete(false);
   }, []);
 
   const handleAttributeSelection = useCallback((attributeKey: string, selected: boolean) => {
@@ -77,6 +86,9 @@ export default function ImportTab({ keycloakConfig, isKeycloakAuthenticated, use
       }
       return newSet;
     });
+    // Reset sync state when attribute selection changes
+    setSyncResults([]);
+    setSyncComplete(false);
   }, []);
 
   const handleSync = async (dryRun: boolean = false) => {
