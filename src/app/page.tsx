@@ -5,6 +5,7 @@ import ImportTab from '@/components/ImportTab';
 import CreateTab from '@/components/CreateTab';
 import DeleteTab from '@/components/DeleteTab';
 import HelpTab from '@/components/HelpTab';
+import PrincipalRegistration from '@/components/PrincipalRegistration';
 import SidePanel from '@/components/SidePanel';
 import Footer from '@/components/Footer';
 import FileUpload from '@/components/FileUpload';
@@ -288,91 +289,7 @@ export default function HomePage() {
         );
       case 'principal':
         return (
-          <div className="max-w-2xl mx-auto space-y-6">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-              </div>
-              <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">
-                Schulleiter einrichten
-              </h1>
-              <p className="text-slate-600 dark:text-slate-400">
-                Erstellen Sie einen Administrator-Account für die Schulleitung
-              </p>
-            </div>
-
-            <div className="card p-6 space-y-6">
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    Vorname *
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    placeholder="Max"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    Nachname *
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    placeholder="Mustermann"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    E-Mail-Adresse *
-                  </label>
-                  <input
-                    type="email"
-                    className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    placeholder="max.mustermann@schule.de"
-                  />
-                </div>
-              </div>
-
-              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                <div className="flex items-start space-x-3">
-                  <svg className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <div>
-                    <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">
-                      Administrator-Rechte
-                    </h4>
-                    <p className="text-sm text-blue-700 dark:text-blue-300 leading-relaxed">
-                      Der Schulleiter-Account erhält vollständige Administrator-Rechte für die Nutzer seiner Schule in Keycloak und kann alle Benutzer dieser Schule verwalten.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-end space-x-4 pt-4 border-t border-slate-200 dark:border-slate-700">
-                <button
-                  onClick={() => setActiveTab('start')}
-                  className="px-6 py-3 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 font-medium transition-colors"
-                >
-                  Zurück
-                </button>
-                <button
-                  className="flex items-center space-x-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors shadow-lg hover:shadow-xl"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                  <span>Schulleiter anlegen</span>
-                </button>
-              </div>
-            </div>
-          </div>
+          <PrincipalRegistration onBack={() => setActiveTab('start')} />
         );
       case 'import':
         return (
