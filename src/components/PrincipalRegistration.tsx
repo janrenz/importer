@@ -165,8 +165,20 @@ export default function PrincipalRegistration({ onBack }: PrincipalRegistrationP
                   <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">
                     Schulnummer finden
                   </h4>
-                  <p className="text-sm text-blue-700 dark:text-blue-300 leading-relaxed">
+                  <p className="text-sm text-blue-700 dark:text-blue-300 leading-relaxed mb-2">
                     Die Schulnummer steht in SchILD unter "Extras → Schule bearbeiten" oder kann bei der Bezirksregierung erfragt werden.
+                  </p>
+                  <p className="text-sm text-blue-700 dark:text-blue-300 leading-relaxed">
+                    Alternativ können Sie Ihre Schulnummer auch in der{' '}
+                    <a 
+                      href="https://www.schulministerium.nrw.de/BiPo/SchuleSuchen/" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="underline hover:no-underline font-medium"
+                    >
+                      offiziellen Schuldatenbank des Schulministeriums NRW
+                    </a>{' '}
+                    nachschlagen.
                   </p>
                 </div>
               </div>
