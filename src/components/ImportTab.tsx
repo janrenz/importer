@@ -94,7 +94,7 @@ export default function ImportTab({ keycloakConfig, isKeycloakAuthenticated, use
   const handleSync = async (dryRun: boolean = false) => {
     const selectedTeachers = users.filter(u => selectedUsers.has(u.id) && u.userType === 'teacher');
     if (selectedTeachers.length === 0) {
-      alert('Bitte wählen Sie mindestens einen Lehrer zum Synchronisieren aus.');
+      alert('Bitte wählen Sie mindestens eine Lehrkraft zum Synchronisieren aus.');
       return;
     }
 
@@ -127,7 +127,7 @@ export default function ImportTab({ keycloakConfig, isKeycloakAuthenticated, use
       const results: SyncResult[] = [];
       
       if (selectedUsersList.length === 0) {
-        alert('Nur Lehreraccounts können synchronisiert werden. Bitte wählen Sie mindestens einen Lehrer aus.');
+        alert('Nur Lehrkraft-Accounts können synchronisiert werden. Bitte wählen Sie mindestens eine Lehrkraft aus.');
         setIsSyncing(false);
         return;
       }

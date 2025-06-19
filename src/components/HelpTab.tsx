@@ -36,7 +36,7 @@ SchILD Import-Tab
             </div>
             <div>
               <h4 className="font-medium text-slate-900 dark:text-slate-100">2. Benutzer auswählen</h4>
-              <p>Wählen Sie die Lehrer aus, die Sie zu Keycloak synchronisieren möchten. Schüler werden derzeit nicht unterstützt.</p>
+              <p>Wählen Sie die Lehrkräfte aus, die Sie zu Keycloak synchronisieren möchten. Schüler werden derzeit nicht unterstützt.</p>
             </div>
             <div>
               <h4 className="font-medium text-slate-900 dark:text-slate-100">3. Attribute konfigurieren</h4>

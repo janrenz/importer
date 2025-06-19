@@ -32,9 +32,9 @@ const FIELD_DEFINITIONS = {
   },
   userType: {
     label: 'Benutzertyp',
-    description: 'Rolle: Lehrer oder Schüler',
+    description: 'Rolle: Lehrkraft oder Schüler',
     required: false,
-    examples: ['Lehrer', 'Teacher', 'Student', 'Schüler']
+    examples: ['Lehrkraft', 'Teacher', 'Student', 'Schüler']
   }
 };
 

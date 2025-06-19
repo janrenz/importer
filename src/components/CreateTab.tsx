@@ -11,7 +11,7 @@ const AVAILABLE_ATTRIBUTES: SyncableAttribute[] = [
   { key: 'firstName', label: 'Vorname', required: true },
   { key: 'lastName', label: 'Nachname', required: true },
   { key: 'email', label: 'E-Mail-Adresse', required: true },
-  { key: 'userType', label: 'Benutzertyp (Schüler/Lehrer)', required: true },
+  { key: 'userType', label: 'Benutzertyp (Schüler/Lehrkraft)', required: true },
 ];
 
 interface ManualUser {
@@ -277,7 +277,7 @@ export default function CreateTab({ keycloakConfig, isKeycloakAuthenticated }: C
     // Only allow teachers for actual sync
     const teachersToSync = validManualUsers.filter(u => u.userType === 'teacher');
     if (!dryRun && teachersToSync.length === 0) {
-      alert('Nur Lehreraccounts können synchronisiert werden. Bitte markieren Sie mindestens einen Benutzer als Lehrer.');
+      alert('Nur Lehrkraft-Accounts können synchronisiert werden. Bitte markieren Sie mindestens einen Benutzer als Lehrkraft.');
       return;
     }
 
@@ -486,7 +486,7 @@ export default function CreateTab({ keycloakConfig, isKeycloakAuthenticated }: C
                             onChange={(e) => updateUser(user.id, 'userType', e.target.value)}
                             className="w-full px-2 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           >
-                            <option value="teacher">Lehrer</option>
+                            <option value="teacher">Lehrkraft</option>
                             <option value="student">Schüler</option>
                           </select>
                         </td>
@@ -520,7 +520,7 @@ export default function CreateTab({ keycloakConfig, isKeycloakAuthenticated }: C
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <span className="text-blue-800 dark:text-blue-200">
-                    {validUsers.length} gültige Benutzer eingegeben • {teacherCount} Lehrer können synchronisiert werden
+                    {validUsers.length} gültige Benutzer eingegeben • {teacherCount} Lehrkräfte können synchronisiert werden
                   </span>
                 </div>
               </div>

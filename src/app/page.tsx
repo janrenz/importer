@@ -171,7 +171,7 @@ export default function HomePage() {
                     Benutzer importieren
                   </h3>
                   <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                    Importieren Sie Lehrer und Schüler über XML-Upload oder manuelle CSV-Erstellung.
+                    Importieren Sie Lehrkräfte und Schüler über XML-Upload oder manuelle CSV-Erstellung.
                   </p>
                 </div>
               </div>

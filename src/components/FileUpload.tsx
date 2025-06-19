@@ -43,7 +43,7 @@ export default function FileUpload({ onUsersLoaded }: FileUploadProps) {
       console.log('Parsed users:', users.length);
       
       if (users.length === 0) {
-        setError('Keine gültigen Benutzer in der XML-Datei gefunden. Stellen Sie sicher, dass die Datei Schüler- oder Lehrerdaten im korrekten SchILD/Logineo-Format enthält.');
+        setError('Keine gültigen Benutzer in der XML-Datei gefunden. Stellen Sie sicher, dass die Datei Schüler- oder Lehrkraft-Daten im korrekten SchILD/Logineo-Format enthält.');
         setIsProcessing(false);
         return;
       }

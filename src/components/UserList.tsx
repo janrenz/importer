@@ -151,7 +151,7 @@ export default function UserList({
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
                   }`}
                 >
-                  Lehrer ({teachersCount})
+                  Lehrkräfte ({teachersCount})
                 </button>
               </div>
 
@@ -185,7 +185,7 @@ export default function UserList({
             onClick={() => onSelectAll(filteredUsers.filter(user => user.userType === 'teacher' && user.email && user.email.trim() !== ''))}
             className="btn-secondary text-sm px-3 py-2"
           >
-            Alle Lehrer auswählen
+            Alle Lehrkräfte auswählen
           </button>
           <button
             onClick={onDeselectAll}
@@ -206,7 +206,7 @@ export default function UserList({
             <div>
               <h4 className="text-sm font-medium text-orange-900 dark:text-orange-100 mb-1">Hinweis zu Schüleraccounts</h4>
               <p className="text-xs text-orange-700 dark:text-orange-300 leading-relaxed">
-                Schüleraccounts sind in telli noch nicht unterstützt. Nur Lehreraccounts können synchronisiert werden.
+                Schüleraccounts sind in telli noch nicht unterstützt. Nur Lehrkraft-Accounts können synchronisiert werden.
               </p>
             </div>
           </div>
@@ -264,7 +264,7 @@ export default function UserList({
                       ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' 
                       : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
                   }`}>
-                    {user.userType === 'student' ? 'Schüler' : 'Lehrer'}
+                    {user.userType === 'student' ? 'Schüler' : 'Lehrkraft'}
                   </span>
                 </div>
                 <input
