@@ -121,7 +121,7 @@ export default function PrincipalRegistration({ onBack }: PrincipalRegistrationP
                       onChange={(e) => setSchoolNumber(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && fetchSchoolInfo()}
                       className="w-full pl-12 pr-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                      placeholder="192016"
+                      placeholder="XXXXXX"
                     />
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -261,10 +261,10 @@ export default function PrincipalRegistration({ onBack }: PrincipalRegistrationP
                 />
                 <div>
                   <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Ich bestätige, dass dies die korrekte Schule ist und ich Zugriff auf das Schulmailpostfach haben
+                    Ich bestätige, dass dies die korrekte Schule ist und ich Zugriff auf das Schulmailpostfach habe.
                   </span>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    Der Administrator-Account wird an die offizielle Schulmail-Adresse ({schoolInfo?.email}) gesendet
+                    Der Administrator-Account wird an die offizielle Schulmail-Adresse ({schoolInfo?.email}) gesendet.
                   </p>
                 </div>
               </label>
