@@ -41,7 +41,7 @@ export default function DeleteTab({ keycloakConfig, xmlUsers, isKeycloakAuthenti
       setKeycloakUsers(allKeycloakUsers);
 
       // Find users in Keycloak that are not in the current XML
-      const xmlEmails = new Set(xmlUsers.map(u => u.email.toLowerCase()));
+      const xmlEmails = new Set(xmlUsers.map(u => u.email?.toLowerCase()).filter(email => email));
       const obsoleteUsers = allKeycloakUsers.filter(user => {
         return user.email && !xmlEmails.has(user.email.toLowerCase());
       });
@@ -72,7 +72,7 @@ export default function DeleteTab({ keycloakConfig, xmlUsers, isKeycloakAuthenti
       setKeycloakUsers(allKeycloakUsers);
 
       // Filter out the current admin user by username
-      const currentUserEmail = keycloakConfig.username.toLowerCase();
+      const currentUserEmail = keycloakConfig.username?.toLowerCase();
       const filteredUsers = allKeycloakUsers.filter(user => {
         // Exclude current user by email or username
         const userEmail = user.email?.toLowerCase();
