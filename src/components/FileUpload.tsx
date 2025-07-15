@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { User } from '@/types';
 import { parseXMLFile } from '@/lib/xmlParser';
 
@@ -13,6 +13,11 @@ export default function FileUpload({ onUsersLoaded, hasLoadedUsers = false }: Fi
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(!hasLoadedUsers);
+
+  // Update isExpanded when hasLoadedUsers changes
+  useEffect(() => {
+    setIsExpanded(!hasLoadedUsers);
+  }, [hasLoadedUsers]);
 
   const handleFileChange = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];

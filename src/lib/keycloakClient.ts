@@ -116,8 +116,11 @@ export class KeycloakClient {
       }
       this.accessToken = tokenResponse.access_token;
       
-      // Store token in session storage for persistence
+      // Store tokens in session storage for persistence
       sessionStorage.setItem('oauth2_access_token', this.accessToken);
+      if (tokenResponse.refresh_token) {
+        sessionStorage.setItem('oauth2_refresh_token', tokenResponse.refresh_token);
+      }
       
       // Clean up session storage
       sessionStorage.removeItem('oauth2_code');
@@ -190,6 +193,17 @@ export class KeycloakClient {
 
     try {
       const logoutUrl = `${this.config.url}/realms/${this.config.realm}/protocol/openid-connect/logout`;
+      const refreshToken = sessionStorage.getItem('oauth2_refresh_token');
+      
+      // Prepare logout request body
+      const body = new URLSearchParams({
+        client_id: this.config.clientId,
+      });
+      
+      // Add refresh token if available
+      if (refreshToken) {
+        body.append('refresh_token', refreshToken);
+      }
       
       const response = await fetch(logoutUrl, {
         method: 'POST',
@@ -197,14 +211,15 @@ export class KeycloakClient {
           'Authorization': `Bearer ${this.accessToken}`,
           'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: new URLSearchParams({
-          client_id: this.config.clientId,
-          refresh_token: sessionStorage.getItem('oauth2_refresh_token') || '',
-        }),
+        body: body,
       });
 
       if (process.env.NODE_ENV === 'development') {
-        console.log('Remote logout response:', response.status);
+        console.log('Remote logout response:', response.status, await response.text());
+      }
+      
+      if (!response.ok) {
+        throw new Error(`Logout failed with status: ${response.status}`);
       }
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
@@ -217,7 +232,7 @@ export class KeycloakClient {
   /**
    * Performs local logout - clears all tokens and storage
    */
-  private performLocalLogout(): void {
+  performLocalLogout(): void {
     // Clear instance variables
     this.accessToken = null;
     this.codeVerifier = null;

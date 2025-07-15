@@ -4,15 +4,17 @@ import { useState, useCallback, useEffect } from 'react';
 import ImportTab from '@/components/ImportTab';
 import CreateTab from '@/components/CreateTab';
 import DeleteTab from '@/components/DeleteTab';
+import UsersTab from '@/components/UsersTab';
 import HelpTab from '@/components/HelpTab';
 import PrincipalRegistration from '@/components/PrincipalRegistration';
 import SidePanel from '@/components/SidePanel';
 import Footer from '@/components/Footer';
 import FileUpload from '@/components/FileUpload';
+import LogoutButton from '@/components/LogoutButton';
 import { User, KeycloakConfig } from '@/types';
 import { KeycloakClient } from '@/lib/keycloakClient';
 
-type TabType = 'start' | 'import' | 'create' | 'delete' | 'principal' | 'help' | 'logout';
+type TabType = 'start' | 'import' | 'create' | 'delete' | 'principal' | 'users' | 'help' | 'logout';
 
 export default function HomePage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -159,6 +161,15 @@ export default function HomePage() {
       ),
     },
     {
+      id: 'users' as TabType,
+      label: 'Nutzer anzeigen',
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+        </svg>
+      ),
+    },
+    {
       id: 'help' as TabType,
       label: 'Hilfe',
       icon: (
@@ -176,16 +187,16 @@ export default function HomePage() {
           <div className="max-w-4xl mx-auto space-y-12">
             {/* Welcome Section */}
             <div className="text-center space-y-6">
-              <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl flex items-center justify-center mx-auto">
+              <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-red-600 rounded-3xl flex items-center justify-center mx-auto">
                 <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
                 </svg>
               </div>
               <div>
-                <h1 className="text-4xl font-bold text-slate-900 dark:text-slate-100 mb-4">
+                <h1 className="text-4xl font-bold text-orange-900 dark:text-orange-100 mb-4">
                   Willkommen bei SchILD Sync
                 </h1>
-                <p className="text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
+                <p className="text-xl text-orange-700 dark:text-orange-300 max-w-2xl mx-auto">
                   Synchronisieren Sie Benutzer aus SchILD XML-Exporten mit Ihrem Keycloak Identity Management System
                 </p>
               </div>
@@ -194,10 +205,10 @@ export default function HomePage() {
             {/* Process Steps */}
             <div className="space-y-8">
               <div className="text-center">
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">
+                <h2 className="text-2xl font-bold text-orange-900 dark:text-orange-100 mb-2">
                   Einrichtungsprozess
                 </h2>
-                <p className="text-slate-600 dark:text-slate-400">
+                <p className="text-orange-600 dark:text-orange-400">
                   Folgen Sie diesen Schritten zur erfolgreichen Einrichtung
                 </p>
               </div>
@@ -205,39 +216,39 @@ export default function HomePage() {
               <div className="grid md:grid-cols-3 gap-8">
                 {/* Step 1 */}
                 <div className="card p-6 text-center group hover:shadow-lg transition-all duration-300">
-                  <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                    <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">1</span>
+                  <div className="w-16 h-16 bg-orange-100 dark:bg-orange-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                    <span className="text-2xl font-bold text-orange-600 dark:text-orange-400">1</span>
                   </div>
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+                  <h3 className="text-lg font-semibold text-orange-900 dark:text-orange-100 mb-2">
                     Schulleiter anlegen
                   </h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                  <p className="text-sm text-orange-600 dark:text-orange-400 leading-relaxed">
                     Erstellen Sie zunächst einmalig einen Administrator-Account für die Schulleitung über den entsprechenden Tab.
                   </p>
                 </div>
 
                 {/* Step 2 */}
                 <div className="card p-6 text-center group hover:shadow-lg transition-all duration-300">
-                  <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                    <span className="text-2xl font-bold text-green-600 dark:text-green-400">2</span>
+                  <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                    <span className="text-2xl font-bold text-amber-600 dark:text-amber-400">2</span>
                   </div>
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+                  <h3 className="text-lg font-semibold text-orange-900 dark:text-orange-100 mb-2">
                     Als Schulleiter anmelden
                   </h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                  <p className="text-sm text-orange-600 dark:text-orange-400 leading-relaxed">
                     Melden Sie sich mit dem erstellten Schulleiter-Account in Keycloak an und konfigurieren Sie die Verbindungsdaten in der Seitenleiste.
                   </p>
                 </div>
 
                 {/* Step 3 */}
                 <div className="card p-6 text-center group hover:shadow-lg transition-all duration-300">
-                  <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                    <span className="text-2xl font-bold text-purple-600 dark:text-purple-400">3</span>
+                  <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                    <span className="text-2xl font-bold text-red-600 dark:text-red-400">3</span>
                   </div>
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+                  <h3 className="text-lg font-semibold text-orange-900 dark:text-orange-100 mb-2">
                     Benutzer importieren
                   </h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                  <p className="text-sm text-orange-600 dark:text-orange-400 leading-relaxed">
                     Importieren Sie Lehrkräfte und Schüler über XML-Upload oder manuelle CSV-Erstellung.
                   </p>
                 </div>
@@ -245,12 +256,12 @@ export default function HomePage() {
             </div>
 
             {/* Quick Actions */}
-            <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-2xl p-8">
+            <div className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 rounded-2xl p-8">
               <div className="text-center mb-6">
-                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">
+                <h3 className="text-xl font-bold text-orange-900 dark:text-orange-100 mb-2">
                   Schnellstart
                 </h3>
-                <p className="text-slate-600 dark:text-slate-400">
+                <p className="text-orange-600 dark:text-orange-400">
                   Beginnen Sie mit einem dieser Schritte
                 </p>
               </div>
@@ -258,7 +269,7 @@ export default function HomePage() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <button
                   onClick={() => setActiveTab('principal')}
-                  className="flex items-center justify-center space-x-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors shadow-lg hover:shadow-xl"
+                  className="flex items-center justify-center space-x-2 px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white font-medium rounded-lg transition-colors shadow-lg hover:shadow-xl"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -268,7 +279,7 @@ export default function HomePage() {
                 
                 <button
                   onClick={() => setActiveTab('import')}
-                  className="flex items-center justify-center space-x-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors shadow-lg hover:shadow-xl"
+                  className="flex items-center justify-center space-x-2 px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-lg transition-colors shadow-lg hover:shadow-xl"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
@@ -282,16 +293,16 @@ export default function HomePage() {
             <div className="grid md:grid-cols-2 gap-6">
               <div className="card p-6">
                 <div className="flex items-start space-x-3">
-                  <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900/30 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <svg className="w-5 h-5 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">
+                    <h4 className="font-semibold text-orange-900 dark:text-orange-100 mb-2">
                       Sichere Verarbeitung
                     </h4>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                    <p className="text-sm text-orange-600 dark:text-orange-400">
                       Alle Daten werden lokal in Ihrem Browser verarbeitet. Keine Übertragung an externe Server.
                     </p>
                   </div>
@@ -379,6 +390,13 @@ export default function HomePage() {
           <DeleteTab
             keycloakConfig={keycloakConfig}
             xmlUsers={users}
+            isKeycloakAuthenticated={isKeycloakAuthenticated}
+          />
+        );
+      case 'users':
+        return (
+          <UsersTab
+            keycloakConfig={keycloakConfig}
             isKeycloakAuthenticated={isKeycloakAuthenticated}
           />
         );
@@ -476,26 +494,26 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-700">
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-orange-50/80 dark:bg-stone-900/80 border-b border-orange-200 dark:border-stone-700">
         <div className="px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+              <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
                 </svg>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                <h1 className="text-xl font-bold text-orange-900 dark:text-orange-100">
                   SchILD Sync
                 </h1>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
+                <p className="text-sm text-orange-600 dark:text-orange-400">
                   Keycloak Integration
                 </p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <div className="hidden sm:flex items-center space-x-2 text-sm text-slate-600 dark:text-slate-300">
+              <div className="hidden sm:flex items-center space-x-2 text-sm text-orange-600 dark:text-orange-300">
                 <div className={`w-2 h-2 rounded-full ${
                   isKeycloakAuthenticated 
                     ? 'bg-green-500 animate-pulse' 
@@ -503,31 +521,14 @@ export default function HomePage() {
                 }`}></div>
                 <span>{isKeycloakAuthenticated ? 'Angemeldet' : 'Nicht angemeldet'}</span>
               </div>
-              <button
-                onClick={async () => {
-                  try {
-                    const client = new KeycloakClient(keycloakConfig);
-                    await client.logout();
-                    setIsKeycloakAuthenticated(false);
-                    setUsers([]);
-                    // Optionally redirect to start page
-                    setActiveTab('start');
-                  } catch (error) {
-                    console.error('Logout error:', error);
-                    // Still reset the local state even if remote logout fails
-                    setIsKeycloakAuthenticated(false);
-                    setUsers([]);
-                    setActiveTab('start');
-                  }
+              <LogoutButton 
+                keycloakConfig={keycloakConfig} 
+                onLogout={() => {
+                  setIsKeycloakAuthenticated(false);
+                  setUsers([]);
+                  setActiveTab('start');
                 }}
-                className="flex items-center space-x-2 px-3 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                title="Ausloggen"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-                <span className="hidden sm:inline">Ausloggen</span>
-              </button>
+              />
             </div>
           </div>
         </div>
@@ -537,7 +538,7 @@ export default function HomePage() {
         {/* Main Content */}
         <div className="flex-1 flex flex-col">
           {/* Tab Navigation */}
-          <div className="border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+          <div className="border-b border-orange-200 dark:border-stone-700 bg-orange-50 dark:bg-stone-900">
             <div className="px-4 sm:px-6 lg:px-8">
               <div className="flex space-x-8">
                 {tabs.map((tab) => (
@@ -546,8 +547,8 @@ export default function HomePage() {
                     onClick={() => setActiveTab(tab.id)}
                     className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                       activeTab === tab.id
-                        ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                        : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600'
+                        ? 'border-orange-500 text-orange-600 dark:text-orange-400'
+                        : 'border-transparent text-orange-500 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 hover:border-orange-300 dark:hover:border-orange-600'
                     }`}
                   >
                     {tab.icon}
@@ -560,7 +561,7 @@ export default function HomePage() {
 
           {/* XML Loader - Only for Delete tab */}
           {activeTab === 'delete' && (
-            <div className="p-4 sm:p-6 lg:p-8 border-b border-slate-200 dark:border-slate-700">
+            <div className="p-4 sm:p-6 lg:p-8 border-b border-orange-200 dark:border-stone-700">
               <FileUpload onUsersLoaded={handleUsersLoaded} hasLoadedUsers={users.length > 0} />
             </div>
           )}

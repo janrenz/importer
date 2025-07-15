@@ -3,36 +3,36 @@
 @tailwind utilities;
 
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
-  --primary: #3b82f6;
-  --primary-dark: #2563eb;
-  --secondary: #64748b;
+  --background: #fef7ed;
+  --foreground: #431407;
+  --primary: #ea580c;
+  --primary-dark: #dc2626;
+  --secondary: #a16207;
   --accent: #f59e0b;
   --accent-dark: #d97706;
-  --success: #10b981;
-  --error: #ef4444;
-  --border: #e2e8f0;
+  --success: #16a34a;
+  --error: #dc2626;
+  --border: #fed7aa;
   --card: #ffffff;
-  --card-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --glass: rgba(255, 255, 255, 0.7);
+  --card-shadow: 0 1px 3px 0 rgb(234 88 12 / 0.1), 0 1px 2px -1px rgb(234 88 12 / 0.1);
+  --glass: rgba(255, 247, 237, 0.8);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0f172a;
-    --foreground: #f1f5f9;
-    --primary: #3b82f6; 
-    --primary-dark: #1d4ed8;
-    --secondary: #94a3b8;
+    --background: #1c1917;
+    --foreground: #fef7ed;
+    --primary: #f97316; 
+    --primary-dark: #ea580c;
+    --secondary: #d97706;
     --accent: #f59e0b;
     --accent-dark: #d97706;
-    --success: #10b981;
+    --success: #22c55e;
     --error: #f87171;
-    --border: #334155;
-    --card: #1e293b;
-    --card-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.3);
-    --glass: rgba(30, 41, 59, 0.7);
+    --border: #57534e;
+    --card: #292524;
+    --card-shadow: 0 10px 15px -3px rgb(41 37 36 / 0.3), 0 4px 6px -4px rgb(41 37 36 / 0.3);
+    --glass: rgba(41, 37, 36, 0.8);
   }
 }
 
@@ -55,7 +55,7 @@ body {
 
 @layer components {
   .card {
-    @apply bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700;
+    @apply bg-white dark:bg-stone-800 rounded-2xl shadow-sm border border-orange-200 dark:border-stone-700;
   }
   
   .glass-card {
@@ -66,11 +66,11 @@ body {
   }
   
   .btn-primary {
-    @apply bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-medium px-6 py-3 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:transform active:scale-95;
+    @apply bg-orange-600 hover:bg-orange-700 active:bg-orange-800 text-white font-medium px-6 py-3 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:transform active:scale-95;
   }
   
   .btn-secondary {
-    @apply bg-slate-100 hover:bg-slate-200 active:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 dark:active:bg-slate-500 text-slate-700 dark:text-slate-200 font-medium px-6 py-3 rounded-lg transition-all duration-200;
+    @apply bg-orange-100 hover:bg-orange-200 active:bg-orange-300 dark:bg-stone-700 dark:hover:bg-stone-600 dark:active:bg-stone-500 text-orange-800 dark:text-orange-200 font-medium px-6 py-3 rounded-lg transition-all duration-200;
   }
   
   .btn-accent {

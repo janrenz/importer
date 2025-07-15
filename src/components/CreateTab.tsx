@@ -274,18 +274,14 @@ export default function CreateTab({ keycloakConfig, isKeycloakAuthenticated }: C
       return;
     }
 
-    // Only allow teachers for actual sync
-    const teachersToSync = validManualUsers.filter(u => u.userType === 'teacher');
-    if (!dryRun && teachersToSync.length === 0) {
-      alert('Nur Lehrkraft-Accounts können synchronisiert werden. Bitte markieren Sie mindestens einen Benutzer als Lehrkraft.');
-      return;
-    }
+    // Allow both teachers and students for sync
+    const usersToSync = validManualUsers;
 
-    if (!dryRun && (!keycloakConfig.url || !keycloakConfig.realm || !keycloakConfig.clientId || !keycloakConfig.redirectUri)) {
+    if (!keycloakConfig.url || !keycloakConfig.realm || !keycloakConfig.clientId || !keycloakConfig.redirectUri) {
       alert('Bitte füllen Sie alle Keycloak-Konfigurationsfelder aus.');
       return;
     }
-    if (!dryRun && !isKeycloakAuthenticated) {
+    if (!isKeycloakAuthenticated) {
       alert('Bitte melden Sie sich zuerst bei Keycloak an.');
       return;
     }
@@ -293,10 +289,10 @@ export default function CreateTab({ keycloakConfig, isKeycloakAuthenticated }: C
     setIsSyncing(true);
     setSyncResults([]);
     setSyncComplete(false);
-    setIsDryRun(dryRun);
+    setIsDryRun(false);
 
     const client = new KeycloakClient(keycloakConfig);
-    const usersToProcess = dryRun ? validManualUsers : teachersToSync;
+    const usersToProcess = usersToSync;
     const convertedUsers = convertToUsers(usersToProcess);
 
     try {
@@ -307,7 +303,7 @@ export default function CreateTab({ keycloakConfig, isKeycloakAuthenticated }: C
 
       for (const user of convertedUsers) {
         try {
-          const result = await client.syncUser(user, AVAILABLE_ATTRIBUTES, dryRun);
+          const result = await client.syncUser(user, AVAILABLE_ATTRIBUTES, false);
           results.push({
             userId: user.id,
             success: result.success,
@@ -328,7 +324,7 @@ export default function CreateTab({ keycloakConfig, isKeycloakAuthenticated }: C
 
       setSyncComplete(true);
     } catch (error) {
-      alert(`${dryRun ? 'Testlauf' : 'Synchronisation'} fehlgeschlagen: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`);
+      alert(`Synchronisation fehlgeschlagen: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`);
     } finally {
       setIsSyncing(false);
     }
@@ -524,18 +520,6 @@ export default function CreateTab({ keycloakConfig, isKeycloakAuthenticated }: C
               </div>
             )}
 
-            {validUsers.some(u => u.userType === 'student') && (
-              <div className="mt-2 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
-                <div className="flex items-center space-x-2 text-sm">
-                  <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.98-.833-2.75 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                  </svg>
-                  <span className="text-orange-800 dark:text-orange-200">
-                    Schüleraccounts können nur im Testlauf validiert, aber nicht synchronisiert werden.
-                  </span>
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
@@ -570,21 +554,6 @@ export default function CreateTab({ keycloakConfig, isKeycloakAuthenticated }: C
                 
                 <div className="space-y-3">
                   <button
-                    onClick={() => handleSync(true)}
-                    disabled={!canTest}
-                    className={`w-full flex items-center justify-center py-3 px-4 rounded-xl font-medium transition-all duration-200 ${
-                      canTest 
-                        ? 'btn-accent shadow-lg hover:shadow-xl transform hover:scale-105' 
-                        : 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
-                    }`}
-                  >
-                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                    </svg>
-                    {isSyncing && isDryRun ? 'Teste...' : 'Testlauf starten'}
-                  </button>
-                  
-                  <button
                     onClick={() => handleSync(false)}
                     disabled={!canSync}
                     className={`w-full flex items-center justify-center py-3 px-4 rounded-xl font-medium transition-all duration-200 ${
@@ -596,22 +565,8 @@ export default function CreateTab({ keycloakConfig, isKeycloakAuthenticated }: C
                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
-                    {isSyncing && !isDryRun ? 'Erstelle...' : 'Benutzer erstellen'}
+                    {isSyncing ? 'Erstelle...' : 'Benutzer erstellen'}
                   </button>
-                </div>
-                
-                <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
-                  <div className="flex items-start space-x-3">
-                    <svg className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <div>
-                      <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">Testlauf Info</h4>
-                      <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
-                        Validiert alle eingegebenen Daten und simuliert den Erstellungsprozess ohne tatsächliche Änderungen an Keycloak.
-                      </p>
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>

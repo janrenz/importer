@@ -27,7 +27,7 @@ export default function HelpTab() {
             <svg className="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
             </svg>
-SchILD Import-Tab
+            SchILD Import-Tab
           </h3>
           <div className="space-y-3 text-sm text-slate-600 dark:text-slate-400">
             <div>
@@ -36,7 +36,7 @@ SchILD Import-Tab
             </div>
             <div>
               <h4 className="font-medium text-slate-900 dark:text-slate-100">2. Benutzer auswählen</h4>
-              <p>Wählen Sie die Lehrkräfte aus, die Sie zu Keycloak synchronisieren möchten. Schüler werden derzeit nicht unterstützt.</p>
+              <p>Wählen Sie die Lehrkräfte und Schüler aus, die Sie zu Keycloak synchronisieren möchten. Beide Benutzertypen werden unterstützt.</p>
             </div>
             <div>
               <h4 className="font-medium text-slate-900 dark:text-slate-100">3. Attribute konfigurieren</h4>
@@ -44,7 +44,7 @@ SchILD Import-Tab
             </div>
             <div>
               <h4 className="font-medium text-slate-900 dark:text-slate-100">4. Synchronisation starten</h4>
-              <p>Führen Sie zuerst einen Testlauf durch, bevor Sie die tatsächliche Synchronisation starten.</p>
+              <p>Starten Sie die Synchronisation direkt. Die Testlauf-Funktionalität kann optional im Code aktiviert werden.</p>
             </div>
           </div>
         </div>
@@ -71,7 +71,7 @@ SchILD Import-Tab
             </div>
             <div>
               <h4 className="font-medium text-slate-900 dark:text-slate-100">4. Benutzer erstellen</h4>
-              <p>Führen Sie einen Testlauf durch, bevor Sie die Benutzer tatsächlich in Keycloak erstellen.</p>
+              <p>Erstellen Sie die Benutzer direkt in Keycloak. Die Testlauf-Funktionalität kann optional im Code aktiviert werden.</p>
             </div>
           </div>
         </div>
@@ -98,7 +98,7 @@ SchILD Import-Tab
             </div>
             <div>
               <h4 className="font-medium text-slate-900 dark:text-slate-100">4. Löschung durchführen</h4>
-              <p>Führen Sie zuerst einen Testlauf durch, bevor Sie die Benutzer tatsächlich löschen.</p>
+              <p>Löschen Sie die ausgewählten Benutzer aus Keycloak. Die Testlauf-Funktionalität kann optional im Code aktiviert werden.</p>
             </div>
           </div>
         </div>
@@ -114,19 +114,23 @@ SchILD Import-Tab
           <div className="space-y-3 text-sm text-slate-600 dark:text-slate-400">
             <div>
               <h4 className="font-medium text-slate-900 dark:text-slate-100">Server URL</h4>
-              <p>Die vollständige URL Ihres Keycloak-Servers (z.B. https://keycloak.example.com)</p>
+              <p>Die vollständige URL Ihres Keycloak-Servers (z.B. https://login.fwu-id-prod.ionos.intension.eu)</p>
             </div>
             <div>
               <h4 className="font-medium text-slate-900 dark:text-slate-100">Realm</h4>
-              <p>Der Name des Keycloak-Realms, in dem die Benutzer verwaltet werden</p>
+              <p>Der Name des Keycloak-Realms (z.B. NutzerverwaltungNRW)</p>
             </div>
             <div>
               <h4 className="font-medium text-slate-900 dark:text-slate-100">Client ID</h4>
-              <p>Üblicherweise "admin-cli" für administrative Operationen</p>
+              <p>Die OAuth2-Client-ID (z.B. nrwpublic)</p>
             </div>
             <div>
-              <h4 className="font-medium text-slate-900 dark:text-slate-100">Anmeldedaten</h4>
-              <p>Benutzername und Passwort eines Keycloak-Administrators mit Berechtigung zur Benutzerverwaltung</p>
+              <h4 className="font-medium text-slate-900 dark:text-slate-100">Redirect URI</h4>
+              <p>Die Callback-URL für OAuth2-Authentifizierung (wird automatisch gesetzt)</p>
+            </div>
+            <div>
+              <h4 className="font-medium text-slate-900 dark:text-slate-100">Authentifizierung</h4>
+              <p>OAuth2-Anmeldung über Keycloak mit PKCE (Proof Key for Code Exchange) für erhöhte Sicherheit</p>
             </div>
           </div>
         </div>
@@ -145,11 +149,11 @@ SchILD Import-Tab
             </div>
             <div>
               <h4 className="font-medium text-slate-900 dark:text-slate-100">Testlauf</h4>
-              <p>Führen Sie immer zuerst einen Testlauf durch, um die Ergebnisse zu überprüfen, bevor Sie tatsächliche Änderungen vornehmen.</p>
+              <p>Testlauf-Funktionalität kann optional im Code aktiviert werden. Standard ist direkte Ausführung.</p>
             </div>
             <div>
               <h4 className="font-medium text-slate-900 dark:text-slate-100">Schüleraccounts</h4>
-              <p>Schüleraccounts werden derzeit nicht unterstützt und können nicht synchronisiert werden.</p>
+              <p>Sowohl Schüler- als auch Lehreraccounts werden vollständig unterstützt.</p>
             </div>
             <div>
               <h4 className="font-medium text-slate-900 dark:text-slate-100">E-Mail-Verifizierung</h4>

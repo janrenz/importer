@@ -155,7 +155,7 @@ export default function ImportTab({ keycloakConfig, isKeycloakAuthenticated, use
 
       setSyncComplete(true);
     } catch (error) {
-      alert(`${dryRun ? 'Testlauf' : 'Synchronisation'} fehlgeschlagen: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`);
+      alert(`Synchronisation fehlgeschlagen: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`);
     } finally {
       setIsSyncing(false);
     }
@@ -248,22 +248,7 @@ export default function ImportTab({ keycloakConfig, isKeycloakAuthenticated, use
                       </div>
                     </div>
                     
-                    <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto lg:min-w-80">
-                      <button
-                        onClick={() => handleSync(true)}
-                        disabled={!canTest}
-                        className={`flex-1 flex items-center justify-center py-3 px-4 rounded-xl font-medium transition-all duration-200 ${
-                          canTest 
-                            ? 'btn-accent shadow-lg hover:shadow-xl transform hover:scale-105' 
-                            : 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
-                        }`}
-                      >
-                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                        </svg>
-                        {isSyncing && isDryRun ? 'Teste...' : 'Testlauf'}
-                      </button>
-                      
+                    <div className="flex justify-center w-full lg:w-auto lg:min-w-80">
                       <button
                         onClick={() => handleSync(false)}
                         disabled={!canSync}
@@ -276,25 +261,11 @@ export default function ImportTab({ keycloakConfig, isKeycloakAuthenticated, use
                         <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                         </svg>
-                        {isSyncing && !isDryRun ? 'Sync...' : 'Synchronisation'}
+                        {isSyncing ? 'Synchronisiere...' : 'Synchronisation starten'}
                       </button>
                     </div>
                   </div>
                   
-                  <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
-                    <div className="flex items-start space-x-3">
-                      <svg className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <div>
-                        <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">Testlauf Info</h4>
-                        <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
-                          Validiert Daten und simuliert den Synchronisationsprozess ohne tatsächliche Änderungen an Keycloak vorzunehmen. 
-                          Keine Authentifizierung erforderlich.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
                   
                   <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
                     <button
