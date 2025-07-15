@@ -9,6 +9,9 @@ interface UserListProps {
   onSelectionChange: (userId: string, selected: boolean) => void;
   onSelectAll: (filteredUsers: User[]) => void;
   onDeselectAll: () => void;
+  onBulkDelete?: (userIds: string[]) => void;
+  onBulkDeactivate?: (userIds: string[]) => void;
+  onBulkActivate?: (userIds: string[]) => void;
 }
 
 export default function UserList({ 
@@ -16,7 +19,10 @@ export default function UserList({
   selectedUsers, 
   onSelectionChange, 
   onSelectAll, 
-  onDeselectAll
+  onDeselectAll,
+  onBulkDelete,
+  onBulkDeactivate,
+  onBulkActivate
 }: UserListProps) {
   const [filter, setFilter] = useState<'all' | 'students' | 'teachers'>('all');
   const [gradeFilter, setGradeFilter] = useState<string>('all');
@@ -194,6 +200,59 @@ export default function UserList({
             Auswahl löschen
           </button>
         </div>
+
+        {/* Bulk Actions */}
+        {selectedCount > 0 && (
+          <div className="card p-4 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-1">
+                  <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                    {selectedCount} Benutzer ausgewählt
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                {onBulkActivate && (
+                  <button
+                    onClick={() => onBulkActivate(Array.from(selectedUsers))}
+                    className="btn-secondary text-sm px-3 py-2 bg-green-600 hover:bg-green-700 text-white border-green-600 hover:border-green-700"
+                  >
+                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Aktivieren
+                  </button>
+                )}
+                {onBulkDeactivate && (
+                  <button
+                    onClick={() => onBulkDeactivate(Array.from(selectedUsers))}
+                    className="btn-secondary text-sm px-3 py-2 bg-yellow-600 hover:bg-yellow-700 text-white border-yellow-600 hover:border-yellow-700"
+                  >
+                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728" />
+                    </svg>
+                    Deaktivieren
+                  </button>
+                )}
+                {onBulkDelete && (
+                  <button
+                    onClick={() => onBulkDelete(Array.from(selectedUsers))}
+                    className="btn-secondary text-sm px-3 py-2 bg-red-600 hover:bg-red-700 text-white border-red-600 hover:border-red-700"
+                  >
+                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Löschen
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Student Notice */}
@@ -259,13 +318,24 @@ export default function UserList({
                       </svg>
                     )}
                   </div>
-                  <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-                    user.userType === 'student' 
-                      ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' 
-                      : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-                  }`}>
-                    {user.userType === 'student' ? 'Schüler' : 'Lehrkraft'}
-                  </span>
+                  <div className="flex items-center space-x-2">
+                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                      user.userType === 'student' 
+                        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' 
+                        : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                    }`}>
+                      {user.userType === 'student' ? 'Schüler' : 'Lehrkraft'}
+                    </span>
+                    {user.enabled !== undefined && (
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        user.enabled 
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' 
+                          : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+                      }`}>
+                        {user.enabled ? 'Aktiv' : 'Inaktiv'}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <input
                   type="checkbox"

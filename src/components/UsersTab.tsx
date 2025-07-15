@@ -30,6 +30,8 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
   const [currentPage, setCurrentPage] = useState(1);
   const [totalUsers, setTotalUsers] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
+  const [bulkActionLoading, setBulkActionLoading] = useState(false);
 
   const loadUsers = useCallback(async (page: number = 1, search: string = '') => {
     if (!isKeycloakAuthenticated) return;
@@ -95,6 +97,63 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
 
   const handlePageChange = (page: number) => {
     loadUsers(page, searchTerm);
+  };
+
+  const handleSelectUser = (userId: string) => {
+    const newSelected = new Set(selectedUsers);
+    if (newSelected.has(userId)) {
+      newSelected.delete(userId);
+    } else {
+      newSelected.add(userId);
+    }
+    setSelectedUsers(newSelected);
+  };
+
+  const handleSelectAll = () => {
+    if (selectedUsers.size === users.length) {
+      setSelectedUsers(new Set());
+    } else {
+      setSelectedUsers(new Set(users.map(u => u.id)));
+    }
+  };
+
+  const handleBulkAction = async (action: 'activate' | 'deactivate' | 'delete') => {
+    if (selectedUsers.size === 0) return;
+    
+    setBulkActionLoading(true);
+    setError(null);
+    
+    try {
+      const client = new KeycloakClient(keycloakConfig);
+      const userIds = Array.from(selectedUsers);
+      
+      for (const userId of userIds) {
+        try {
+          switch (action) {
+            case 'activate':
+              await client.activateUser(userId);
+              break;
+            case 'deactivate':
+              await client.deactivateUser(userId);
+              break;
+            case 'delete':
+              await client.deleteUser(userId);
+              break;
+          }
+        } catch (err) {
+          console.error(`Failed to ${action} user ${userId}:`, err);
+        }
+      }
+      
+      // Refresh the users list
+      await loadUsers(currentPage, searchTerm);
+      setSelectedUsers(new Set());
+      
+    } catch (err) {
+      setError(`Bulk ${action} failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    } finally {
+      setBulkActionLoading(false);
+    }
   };
 
   const totalPages = Math.ceil(totalUsers / USERS_PER_PAGE);
@@ -173,6 +232,68 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
         </form>
       </div>
 
+      {/* Bulk Actions */}
+      {selectedUsers.size > 0 && (
+        <div className="card p-4 bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-1">
+                <svg className="w-5 h-5 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="text-sm font-medium text-orange-900 dark:text-orange-100">
+                  {selectedUsers.size} Benutzer ausgewählt
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => handleBulkAction('activate')}
+                disabled={bulkActionLoading}
+                className="btn-secondary text-sm px-3 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white border-green-600 hover:border-green-700"
+              >
+                {bulkActionLoading ? (
+                  <div className="w-4 h-4 mr-1 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+                Aktivieren
+              </button>
+              <button
+                onClick={() => handleBulkAction('deactivate')}
+                disabled={bulkActionLoading}
+                className="btn-secondary text-sm px-3 py-2 bg-yellow-600 hover:bg-yellow-700 disabled:bg-yellow-400 text-white border-yellow-600 hover:border-yellow-700"
+              >
+                {bulkActionLoading ? (
+                  <div className="w-4 h-4 mr-1 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728" />
+                  </svg>
+                )}
+                Deaktivieren
+              </button>
+              <button
+                onClick={() => handleBulkAction('delete')}
+                disabled={bulkActionLoading}
+                className="btn-secondary text-sm px-3 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white border-red-600 hover:border-red-700"
+              >
+                {bulkActionLoading ? (
+                  <div className="w-4 h-4 mr-1 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                )}
+                Löschen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Error Message */}
       {error && (
         <div className="card p-4 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800">
@@ -198,6 +319,14 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
               <thead className="bg-orange-50 dark:bg-orange-900/20">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-orange-600 dark:text-orange-400 uppercase tracking-wider">
+                    <input
+                      type="checkbox"
+                      checked={selectedUsers.size > 0 && selectedUsers.size === users.length}
+                      onChange={handleSelectAll}
+                      className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                    />
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-orange-600 dark:text-orange-400 uppercase tracking-wider">
                     Benutzer
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-orange-600 dark:text-orange-400 uppercase tracking-wider">
@@ -217,6 +346,14 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
               <tbody className="divide-y divide-orange-200 dark:divide-orange-700">
                 {users.map((user) => (
                   <tr key={user.id} className="hover:bg-orange-50 dark:hover:bg-orange-900/10">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <input
+                        type="checkbox"
+                        checked={selectedUsers.has(user.id)}
+                        onChange={() => handleSelectUser(user.id)}
+                        className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                      />
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="w-8 h-8 bg-gradient-to-br from-orange-400 to-red-500 rounded-full flex items-center justify-center mr-3">

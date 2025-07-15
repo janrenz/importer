@@ -262,7 +262,7 @@ export class KeycloakClient {
   }
 
   /**
-   * Fetches the current user's profile information
+   * Fetches the current user's profile information including custom attributes
    */
   async getCurrentUserProfile(): Promise<any> {
     if (!this.accessToken) {
@@ -270,7 +270,8 @@ export class KeycloakClient {
     }
 
     try {
-      const response = await fetch(`${this.config.url}/realms/${this.config.realm}/protocol/openid-connect/userinfo`, {
+      // First get basic user info to get the user ID
+      const userinfoResponse = await fetch(`${this.config.url}/realms/${this.config.realm}/protocol/openid-connect/userinfo`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${this.accessToken}`,
@@ -278,19 +279,59 @@ export class KeycloakClient {
         },
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
+      if (!userinfoResponse.ok) {
+        const errorText = await userinfoResponse.text();
         if (process.env.NODE_ENV === 'development') {
-          console.error('Failed to fetch user profile:', response.status, errorText);
+          console.error('Failed to fetch user info:', userinfoResponse.status, errorText);
         }
-        throw new Error(`Failed to fetch user profile (${response.status}): ${response.statusText}`);
+        throw new Error(`Failed to fetch user info (${userinfoResponse.status}): ${userinfoResponse.statusText}`);
       }
 
-      const userInfo = await response.json();
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Current user profile:', userInfo);
+      const userInfo = await userinfoResponse.json();
+      
+      // Now fetch full user profile including custom attributes from Admin API
+      const adminResponse = await fetch(`${this.config.url}/admin/realms/${this.config.realm}/users/${userInfo.sub}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${this.accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!adminResponse.ok) {
+        const errorText = await adminResponse.text();
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Failed to fetch full user profile:', adminResponse.status, errorText);
+        }
+        // Fall back to basic user info if admin API fails
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Current user profile (basic):', userInfo);
+        }
+        return userInfo;
       }
-      return userInfo;
+
+      const fullProfile = await adminResponse.json();
+      
+      // Extract custom attributes from the attributes object
+      const customAttributes: { [key: string]: string } = {};
+      if (fullProfile.attributes) {
+        Object.keys(fullProfile.attributes).forEach(key => {
+          // Keycloak stores attributes as arrays, take the first value
+          customAttributes[key] = fullProfile.attributes[key][0];
+        });
+      }
+
+      const enrichedProfile = {
+        ...userInfo,
+        ...customAttributes,
+        fullProfile
+      };
+
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Current user profile (enriched):', enrichedProfile);
+      }
+      
+      return enrichedProfile;
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
         console.error('Error fetching user profile:', error);
@@ -511,7 +552,8 @@ export class KeycloakClient {
         email: kUser.email || kUser.username || '',
         userType: kUser.attributes?.userType?.[0] || 'teacher', // Default to teacher
         schildId: kUser.attributes?.schildId?.[0] || '',
-        klasse: kUser.attributes?.klasse?.[0]
+        klasse: kUser.attributes?.klasse?.[0],
+        enabled: kUser.enabled !== undefined ? kUser.enabled : true
       }));
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
@@ -549,6 +591,80 @@ export class KeycloakClient {
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
         console.error('Error deleting user:', error);
+      }
+      return false;
+    }
+  }
+
+  async deactivateUser(userId: string, dryRun: boolean = false): Promise<boolean> {
+    if (dryRun) {
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 100 + Math.random() * 200));
+      console.log('DRY RUN - Would deactivate user:', userId);
+      return true;
+    }
+
+    if (!this.accessToken) {
+      throw new Error('Not authenticated');
+    }
+
+    try {
+      const response = await fetch(`${this.config.url}/admin/realms/${this.config.realm}/users/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${this.accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          enabled: false
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to deactivate user: ${response.statusText}`);
+      }
+
+      return true;
+    } catch (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error deactivating user:', error);
+      }
+      return false;
+    }
+  }
+
+  async activateUser(userId: string, dryRun: boolean = false): Promise<boolean> {
+    if (dryRun) {
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 100 + Math.random() * 200));
+      console.log('DRY RUN - Would activate user:', userId);
+      return true;
+    }
+
+    if (!this.accessToken) {
+      throw new Error('Not authenticated');
+    }
+
+    try {
+      const response = await fetch(`${this.config.url}/admin/realms/${this.config.realm}/users/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${this.accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          enabled: true
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to activate user: ${response.statusText}`);
+      }
+
+      return true;
+    } catch (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error activating user:', error);
       }
       return false;
     }

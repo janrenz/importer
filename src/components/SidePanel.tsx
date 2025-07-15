@@ -184,14 +184,14 @@ export default function SidePanel({ keycloakConfig, onConfigChange, isKeycloakAu
               </p>
             </div>
           )}
-          <div className="flex items-start space-x-2">
+          {/* <div className="flex items-start space-x-2">
             <svg className="w-3 h-3 mt-0.5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.98-.833-2.75 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
             </svg>
-            <p>
+             <p>
               Stellen Sie sicher, dass Ihr Keycloak-Benutzer administrative Rechte für die Benutzerverwaltung hat.
-            </p>
-          </div>
+            </p> 
+          </div> 
           <div className="flex items-start space-x-2">
             <svg className="w-3 h-3 mt-0.5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -199,7 +199,7 @@ export default function SidePanel({ keycloakConfig, onConfigChange, isKeycloakAu
             <p>
               Alle Anmeldedaten werden nur in Ihrer Browser-Session gespeichert.
             </p>
-          </div>
+          </div>*/}
         </div>
       </div>
       </div>

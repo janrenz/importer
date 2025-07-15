@@ -6,6 +6,7 @@ export interface User {
   userType: 'student' | 'teacher';
   schildId: string;
   klasse?: string;
+  enabled?: boolean;
 }
 
 export interface KeycloakConfig {

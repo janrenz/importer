@@ -27,12 +27,25 @@ export default function HomePage() {
   });
   const [isKeycloakAuthenticated, setIsKeycloakAuthenticated] = useState(false);
   const [isLoginLoading, setIsLoginLoading] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
 
   const handleUsersLoaded = useCallback((loadedUsers: User[]) => {
     setUsers(loadedUsers);
   }, []);
 
   const [callbackPending, setCallbackPending] = useState(false);
+
+  // Fetch user profile when authenticated
+  const fetchUserProfile = useCallback(async (client: KeycloakClient) => {
+    try {
+      const profile = await client.getCurrentUserProfile();
+      console.log('User profile fetched:', profile);
+      setUserProfile(profile);
+    } catch (error) {
+      console.error('Failed to fetch user profile:', error);
+      setUserProfile(null);
+    }
+  }, []);
 
   // Check for OAuth2 callback completion on mount
   useEffect(() => {
@@ -75,6 +88,9 @@ export default function HomePage() {
             console.log('Login completion result:', success);
           }
           setIsKeycloakAuthenticated(success);
+          if (success) {
+            await fetchUserProfile(keycloakClient);
+          }
         } catch (error) {
           console.error('OAuth2 completion error:', error);
           setIsKeycloakAuthenticated(false);
@@ -83,7 +99,11 @@ export default function HomePage() {
           setIsLoginLoading(false);
         }
       } else {
-        setIsKeycloakAuthenticated(keycloakClient.isAuthenticated());
+        const isAuth = keycloakClient.isAuthenticated();
+        setIsKeycloakAuthenticated(isAuth);
+        if (isAuth) {
+          await fetchUserProfile(keycloakClient);
+        }
       }
     };
 
@@ -152,20 +172,20 @@ export default function HomePage() {
       ),
     },
     {
-      id: 'delete' as TabType,
-      label: 'Löschen',
-      icon: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-        </svg>
-      ),
-    },
-    {
       id: 'users' as TabType,
       label: 'Nutzer anzeigen',
       icon: (
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+        </svg>
+      ),
+    },
+    {
+      id: 'delete' as TabType,
+      label: 'Löschen',
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
         </svg>
       ),
     },
@@ -187,16 +207,16 @@ export default function HomePage() {
           <div className="max-w-4xl mx-auto space-y-12">
             {/* Welcome Section */}
             <div className="text-center space-y-6">
-              <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-red-600 rounded-3xl flex items-center justify-center mx-auto">
+              <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-3xl flex items-center justify-center mx-auto">
                 <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
                 </svg>
               </div>
               <div>
-                <h1 className="text-4xl font-bold text-orange-900 dark:text-orange-100 mb-4">
+                <h1 className="text-4xl font-bold text-slate-900 dark:text-slate-100 mb-4">
                   Willkommen bei SchILD Sync
                 </h1>
-                <p className="text-xl text-orange-700 dark:text-orange-300 max-w-2xl mx-auto">
+                <p className="text-xl text-slate-700 dark:text-slate-300 max-w-2xl mx-auto">
                   Synchronisieren Sie Benutzer aus SchILD XML-Exporten mit Ihrem Keycloak Identity Management System
                 </p>
               </div>
@@ -205,10 +225,10 @@ export default function HomePage() {
             {/* Process Steps */}
             <div className="space-y-8">
               <div className="text-center">
-                <h2 className="text-2xl font-bold text-orange-900 dark:text-orange-100 mb-2">
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">
                   Einrichtungsprozess
                 </h2>
-                <p className="text-orange-600 dark:text-orange-400">
+                <p className="text-slate-600 dark:text-slate-400">
                   Folgen Sie diesen Schritten zur erfolgreichen Einrichtung
                 </p>
               </div>
@@ -494,26 +514,34 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-orange-50/80 dark:bg-stone-900/80 border-b border-orange-200 dark:border-stone-700">
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-slate-50/80 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-700">
         <div className="px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
                 </svg>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-orange-900 dark:text-orange-100">
+                <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
                   SchILD Sync
                 </h1>
-                <p className="text-sm text-orange-600 dark:text-orange-400">
-                  Keycloak Integration
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  {userProfile?.schulnummer ? `Schule: ${userProfile.schulnummer}` : 
+                   userProfile?.attributes?.schulnummer ? `Schule: ${userProfile.attributes.schulnummer}` :
+                   userProfile?.attributes?.schulnummer?.[0] ? `Schule: ${userProfile.attributes.schulnummer[0]}` :
+                   isKeycloakAuthenticated ? 'Angemeldet (Schulnummer nicht verfügbar)' : 'Keycloak Integration'}
+                  {process.env.NODE_ENV === 'development' && userProfile && (
+                    <span className="ml-2 text-xs text-red-500">
+                      (Profile: {JSON.stringify(userProfile, null, 2).slice(0, 200)}...)
+                    </span>
+                  )}
                 </p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <div className="hidden sm:flex items-center space-x-2 text-sm text-orange-600 dark:text-orange-300">
+              <div className="hidden sm:flex items-center space-x-2 text-sm text-slate-600 dark:text-slate-300">
                 <div className={`w-2 h-2 rounded-full ${
                   isKeycloakAuthenticated 
                     ? 'bg-green-500 animate-pulse' 
@@ -526,6 +554,7 @@ export default function HomePage() {
                 onLogout={() => {
                   setIsKeycloakAuthenticated(false);
                   setUsers([]);
+                  setUserProfile(null);
                   setActiveTab('start');
                 }}
               />
@@ -538,7 +567,7 @@ export default function HomePage() {
         {/* Main Content */}
         <div className="flex-1 flex flex-col">
           {/* Tab Navigation */}
-          <div className="border-b border-orange-200 dark:border-stone-700 bg-orange-50 dark:bg-stone-900">
+          <div className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
             <div className="px-4 sm:px-6 lg:px-8">
               <div className="flex space-x-8">
                 {tabs.map((tab) => (
@@ -547,8 +576,8 @@ export default function HomePage() {
                     onClick={() => setActiveTab(tab.id)}
                     className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                       activeTab === tab.id
-                        ? 'border-orange-500 text-orange-600 dark:text-orange-400'
-                        : 'border-transparent text-orange-500 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 hover:border-orange-300 dark:hover:border-orange-600'
+                        ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                        : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-blue-700 dark:hover:text-blue-300 hover:border-blue-300 dark:hover:border-blue-600'
                     }`}
                   >
                     {tab.icon}
@@ -561,7 +590,7 @@ export default function HomePage() {
 
           {/* XML Loader - Only for Delete tab */}
           {activeTab === 'delete' && (
-            <div className="p-4 sm:p-6 lg:p-8 border-b border-orange-200 dark:border-stone-700">
+            <div className="p-4 sm:p-6 lg:p-8 border-b border-slate-200 dark:border-slate-700">
               <FileUpload onUsersLoaded={handleUsersLoaded} hasLoadedUsers={users.length > 0} />
             </div>
           )}
