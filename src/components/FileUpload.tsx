@@ -6,11 +6,13 @@ import { parseXMLFile } from '@/lib/xmlParser';
 
 interface FileUploadProps {
   onUsersLoaded: (users: User[]) => void;
+  hasLoadedUsers?: boolean;
 }
 
-export default function FileUpload({ onUsersLoaded }: FileUploadProps) {
+export default function FileUpload({ onUsersLoaded, hasLoadedUsers = false }: FileUploadProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isExpanded, setIsExpanded] = useState(!hasLoadedUsers);
 
   const handleFileChange = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -43,7 +45,7 @@ export default function FileUpload({ onUsersLoaded }: FileUploadProps) {
       console.log('Parsed users:', users.length);
       
       if (users.length === 0) {
-        setError('Keine gültigen Benutzer in der XML-Datei gefunden. Stellen Sie sicher, dass die Datei Schüler- oder Lehrkraft-Daten im korrekten SchILD/Logineo-Format enthält.');
+        setError('Keine gültigen Benutzer in der XML-Datei gefunden. Stellen Sie sicher, dass die Datei Schüler- oder Lehrkraft-Daten im korrekten SchILD-Format enthält.');
         setIsProcessing(false);
         return;
       }
@@ -61,7 +63,7 @@ export default function FileUpload({ onUsersLoaded }: FileUploadProps) {
         }
       }
       
-      errorMessage += ' Stellen Sie sicher, dass Sie eine gültige SchILD/Logineo XML-Export-Datei hochgeladen haben.';
+      errorMessage += ' Stellen Sie sicher, dass Sie eine gültige SchILD XML-Export-Datei hochgeladen haben.';
       setError(errorMessage);
     }
     
@@ -70,6 +72,43 @@ export default function FileUpload({ onUsersLoaded }: FileUploadProps) {
     event.target.value = '';
   }, [onUsersLoaded]);
 
+  // Show compact view when users are loaded
+  if (hasLoadedUsers && !isExpanded) {
+    return (
+      <div className="relative">
+        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+          <button
+            onClick={() => setIsExpanded(true)}
+            className="w-full p-3 flex items-center justify-between hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors rounded-lg"
+          >
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-blue-600 rounded-lg flex items-center justify-center">
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <div className="text-left">
+                <h3 className="text-sm font-medium text-green-900 dark:text-green-100">
+                  XML-Datei geladen
+                </h3>
+                <p className="text-xs text-green-800 dark:text-green-200">
+                  Klicken zum Laden einer neuen XML-Datei
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2 text-green-700 dark:text-green-300">
+              <span className="text-xs font-medium">Neue XML laden</span>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show full upload interface
   return (
     <div className="relative">
       <div className={`card p-6 sm:p-8 text-center transition-all duration-300 border-2 border-dashed animate-bounce-in ${
@@ -106,7 +145,7 @@ export default function FileUpload({ onUsersLoaded }: FileUploadProps) {
             <p className="text-slate-600 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
               {isProcessing 
                 ? 'Bitte warten Sie, während wir Ihre XML-Datei verarbeiten'
-                : 'Wählen Sie Ihre SchILD/Logineo XML-Export-Datei aus, um Benutzerdaten zu importieren und mit Keycloak zu synchronisieren'
+                : 'Wählen Sie Ihre SchILD XML-Export-Datei aus, um Benutzerdaten zu importieren und mit Keycloak zu synchronisieren'
               }
             </p>
           </div>
@@ -160,7 +199,7 @@ export default function FileUpload({ onUsersLoaded }: FileUploadProps) {
                 <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
                 </svg>
-                <span>SchILD/Logineo</span>
+                <span>SchILD</span>
               </div>
               <div className="flex items-center space-x-2 text-sm text-slate-500 dark:text-slate-400">
                 <svg className="w-4 h-4 text-amber-500" fill="currentColor" viewBox="0 0 20 20">

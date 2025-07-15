@@ -281,8 +281,12 @@ export default function CreateTab({ keycloakConfig, isKeycloakAuthenticated }: C
       return;
     }
 
-    if (!dryRun && (!keycloakConfig.url || !keycloakConfig.username || !keycloakConfig.password)) {
+    if (!dryRun && (!keycloakConfig.url || !keycloakConfig.realm || !keycloakConfig.clientId || !keycloakConfig.redirectUri)) {
       alert('Bitte füllen Sie alle Keycloak-Konfigurationsfelder aus.');
+      return;
+    }
+    if (!dryRun && !isKeycloakAuthenticated) {
+      alert('Bitte melden Sie sich zuerst bei Keycloak an.');
       return;
     }
 
@@ -296,14 +300,8 @@ export default function CreateTab({ keycloakConfig, isKeycloakAuthenticated }: C
     const convertedUsers = convertToUsers(usersToProcess);
 
     try {
-      if (!dryRun) {
-        const authenticated = await client.authenticate();
-        if (!authenticated) {
-          alert('Keycloak-Authentifizierung fehlgeschlagen. Bitte überprüfen Sie Ihre Anmeldedaten.');
-          setIsSyncing(false);
-          return;
-        }
-      }
+      // OAuth2 authentication is handled globally, token is stored in session
+      // No need to authenticate here - the client will use the stored token
 
       const results: SyncResult[] = [];
 

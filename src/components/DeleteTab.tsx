@@ -35,7 +35,7 @@ export default function DeleteTab({ keycloakConfig, xmlUsers, isKeycloakAuthenti
     setIsLoading(true);
     try {
       const client = new KeycloakClient(keycloakConfig);
-      await client.authenticate();
+      // OAuth2 authentication is handled globally, token is stored in session
       
       const allKeycloakUsers = await client.getAllUsers();
       setKeycloakUsers(allKeycloakUsers);
@@ -66,7 +66,7 @@ export default function DeleteTab({ keycloakConfig, xmlUsers, isKeycloakAuthenti
     setIsLoading(true);
     try {
       const client = new KeycloakClient(keycloakConfig);
-      await client.authenticate();
+      // OAuth2 authentication is handled globally, token is stored in session
       
       const allKeycloakUsers = await client.getAllUsers();
       setKeycloakUsers(allKeycloakUsers);
@@ -138,9 +138,7 @@ export default function DeleteTab({ keycloakConfig, xmlUsers, isKeycloakAuthenti
 
     try {
       const client = new KeycloakClient(keycloakConfig);
-      if (!dryRun) {
-        await client.authenticate();
-      }
+      // OAuth2 authentication is handled globally, token is stored in session
 
       const results: DeleteResult[] = [];
 

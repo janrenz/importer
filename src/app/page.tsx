@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import ImportTab from '@/components/ImportTab';
 import CreateTab from '@/components/CreateTab';
 import DeleteTab from '@/components/DeleteTab';
@@ -18,32 +18,99 @@ export default function HomePage() {
   const [users, setUsers] = useState<User[]>([]);
   const [activeTab, setActiveTab] = useState<TabType>('start');
   const [keycloakConfig, setKeycloakConfig] = useState<KeycloakConfig>({
-    url: '',
-    realm: 'master',
-    clientId: 'admin-cli',
-    username: '',
-    password: '',
+    url: 'https://login.fwu-id-prod.ionos.intension.eu',
+    realm: 'NutzerverwaltungNRW',
+    clientId: 'nrwpublic',
+    redirectUri: 'https://localhost:3000/callback', // Will be updated in useEffect
   });
   const [isKeycloakAuthenticated, setIsKeycloakAuthenticated] = useState(false);
+  const [isLoginLoading, setIsLoginLoading] = useState(false);
 
   const handleUsersLoaded = useCallback((loadedUsers: User[]) => {
     setUsers(loadedUsers);
   }, []);
 
-  const testKeycloakConnection = useCallback(async (config: KeycloakConfig) => {
-    if (!config.url || !config.username || !config.password) {
-      setIsKeycloakAuthenticated(false);
+  const [callbackPending, setCallbackPending] = useState(false);
+
+  // Check for OAuth2 callback completion on mount
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      // Update the config to use the correct redirect URI
+      const updatedConfig = {
+        ...keycloakConfig,
+        redirectUri: typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.host}/callback` : keycloakConfig.redirectUri
+      };
+      
+      // Update redirect URI if it changed
+      if (typeof window !== 'undefined') {
+        const currentRedirectUri = `${window.location.protocol}//${window.location.host}/callback`;
+        if (keycloakConfig.redirectUri !== currentRedirectUri) {
+          setKeycloakConfig(prev => ({
+            ...prev,
+            redirectUri: currentRedirectUri
+          }));
+        }
+      }
+      
+      const keycloakClient = new KeycloakClient(updatedConfig);
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Checking auth status...');
+        console.log('Is callback pending:', keycloakClient.isCallbackPending());
+        console.log('Is authenticated:', keycloakClient.isAuthenticated());
+      }
+      
+      if (keycloakClient.isCallbackPending()) {
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Callback pending, completing login...');
+        }
+        setCallbackPending(true);
+        setIsLoginLoading(true);
+        
+        try {
+          const success = await keycloakClient.completeLogin();
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Login completion result:', success);
+          }
+          setIsKeycloakAuthenticated(success);
+        } catch (error) {
+          console.error('OAuth2 completion error:', error);
+          setIsKeycloakAuthenticated(false);
+        } finally {
+          setCallbackPending(false);
+          setIsLoginLoading(false);
+        }
+      } else {
+        setIsKeycloakAuthenticated(keycloakClient.isAuthenticated());
+      }
+    };
+
+    checkAuthStatus();
+  }, []); // Empty dependency array to run only once on mount
+
+  const handleOAuth2Login = useCallback(async () => {
+    if (!keycloakConfig.url || !keycloakConfig.realm || !keycloakConfig.clientId || !keycloakConfig.redirectUri) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Missing required OAuth2 configuration');
+      }
       return;
     }
 
+    setIsLoginLoading(true);
+    
     try {
-      const client = new KeycloakClient(config);
-      const isAuthenticated = await client.authenticate();
-      setIsKeycloakAuthenticated(isAuthenticated);
+      const client = new KeycloakClient(keycloakConfig);
+      await client.initiateLogin();
+      // User will be redirected to Keycloak, so we don't need to handle response here
     } catch (error) {
-      setIsKeycloakAuthenticated(false);
+      console.error('OAuth2 login error:', error);
+      setIsLoginLoading(false);
     }
-  }, []);
+  }, [keycloakConfig]);
+
+  const handleManualLogin = useCallback(() => {
+    handleOAuth2Login();
+  }, [handleOAuth2Login]);
 
   const tabs = [
     {
@@ -119,7 +186,7 @@ export default function HomePage() {
                   Willkommen bei SchILD Sync
                 </h1>
                 <p className="text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-                  Synchronisieren Sie Benutzer aus SchILD/Logineo XML-Exporten mit Ihrem Keycloak Identity Management System
+                  Synchronisieren Sie Benutzer aus SchILD XML-Exporten mit Ihrem Keycloak Identity Management System
                 </p>
               </div>
             </div>
@@ -289,7 +356,7 @@ export default function HomePage() {
         );
       case 'principal':
         return (
-          <PrincipalRegistration onBack={() => setActiveTab('start')} />
+          <PrincipalRegistration onBack={() => setActiveTab('start')} isAuthenticated={isKeycloakAuthenticated} />
         );
       case 'import':
         return (
@@ -381,13 +448,23 @@ export default function HomePage() {
                 Zurück
               </button>
               <button
-                onClick={() => window.location.reload()}
+                onClick={async () => {
+                  try {
+                    const client = new KeycloakClient(keycloakConfig);
+                    await client.logout();
+                  } catch (error) {
+                    console.error('Logout error:', error);
+                  } finally {
+                    // Always reload the page after logout
+                    window.location.reload();
+                  }
+                }}
                 className="flex items-center space-x-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors shadow-lg hover:shadow-xl"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
-                <span>Seite neu laden</span>
+                <span>Ausloggen & Seite neu laden</span>
               </button>
             </div>
           </div>
@@ -427,7 +504,22 @@ export default function HomePage() {
                 <span>{isKeycloakAuthenticated ? 'Angemeldet' : 'Nicht angemeldet'}</span>
               </div>
               <button
-                onClick={() => setActiveTab('logout')}
+                onClick={async () => {
+                  try {
+                    const client = new KeycloakClient(keycloakConfig);
+                    await client.logout();
+                    setIsKeycloakAuthenticated(false);
+                    setUsers([]);
+                    // Optionally redirect to start page
+                    setActiveTab('start');
+                  } catch (error) {
+                    console.error('Logout error:', error);
+                    // Still reset the local state even if remote logout fails
+                    setIsKeycloakAuthenticated(false);
+                    setUsers([]);
+                    setActiveTab('start');
+                  }
+                }}
                 className="flex items-center space-x-2 px-3 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
                 title="Ausloggen"
               >
@@ -466,10 +558,10 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* XML Loader - Shared between Import and Delete tabs */}
-          {(activeTab === 'import' || activeTab === 'delete') && users.length === 0 && (
+          {/* XML Loader - Only for Delete tab */}
+          {activeTab === 'delete' && (
             <div className="p-4 sm:p-6 lg:p-8 border-b border-slate-200 dark:border-slate-700">
-              <FileUpload onUsersLoaded={handleUsersLoaded} />
+              <FileUpload onUsersLoaded={handleUsersLoaded} hasLoadedUsers={users.length > 0} />
             </div>
           )}
 
@@ -484,9 +576,12 @@ export default function HomePage() {
           keycloakConfig={keycloakConfig}
           onConfigChange={(config) => {
             setKeycloakConfig(config);
-            testKeycloakConnection(config);
+            // No automatic connection test for OAuth2 - user must manually login
           }}
           isKeycloakAuthenticated={isKeycloakAuthenticated}
+          onLogin={handleManualLogin}
+          isLoading={isLoginLoading}
+          callbackPending={callbackPending}
         />
       </div>
 

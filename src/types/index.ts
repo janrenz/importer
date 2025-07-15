@@ -12,8 +12,7 @@ export interface KeycloakConfig {
   url: string;
   realm: string;
   clientId: string;
-  username: string;
-  password: string;
+  redirectUri: string;
 }
 
 export interface SyncableAttribute {

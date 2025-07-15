@@ -21,6 +21,7 @@ interface SchoolInfo {
 
 interface PrincipalRegistrationProps {
   onBack: () => void;
+  isAuthenticated?: boolean;
 }
 
 type RegistrationStep = 'input' | 'school-info' | 'confirmation' | 'result';
@@ -30,7 +31,7 @@ interface AccountCreationResult {
   message: string;
 }
 
-export default function PrincipalRegistration({ onBack }: PrincipalRegistrationProps) {
+export default function PrincipalRegistration({ onBack, isAuthenticated = false }: PrincipalRegistrationProps) {
   const [step, setStep] = useState<RegistrationStep>('input');
   const [schoolNumber, setSchoolNumber] = useState('');
   const [schoolInfo, setSchoolInfo] = useState<SchoolInfo | null>(null);
@@ -456,6 +457,94 @@ export default function PrincipalRegistration({ onBack }: PrincipalRegistrationP
     }
   };
 
+  // Show different content when user is authenticated
+  if (isAuthenticated) {
+    return (
+      <div className="max-w-2xl mx-auto space-y-6">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">
+            Schulleiter bereits eingerichtet
+          </h1>
+          <p className="text-slate-600 dark:text-slate-400">
+            Sie sind bereits als Schulleiter angemeldet und können das System nutzen
+          </p>
+        </div>
+
+        <div className="card p-6 space-y-6">
+          <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-6 border border-green-200 dark:border-green-800">
+            <div className="flex items-start space-x-3">
+              <svg className="w-6 h-6 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div>
+                <h3 className="text-lg font-semibold text-green-900 dark:text-green-100 mb-2">
+                  Erfolgreich angemeldet
+                </h3>
+                <p className="text-green-800 dark:text-green-200 leading-relaxed">
+                  Sie sind bereits mit Ihrem Schulleiter-Account bei Keycloak angemeldet. Sie können nun:
+                </p>
+                <ul className="mt-3 space-y-1 text-green-800 dark:text-green-200">
+                  <li className="flex items-center space-x-2">
+                    <svg className="w-4 h-4 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>SchILD XML-Dateien importieren</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <svg className="w-4 h-4 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Lehrkräfte und Schüler synchronisieren</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <svg className="w-4 h-4 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Benutzerdaten verwalten</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-6 border border-blue-200 dark:border-blue-800">
+            <div className="flex items-start space-x-3">
+              <svg className="w-6 h-6 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div>
+                <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
+                  Nächste Schritte
+                </h4>
+                <p className="text-sm text-blue-800 dark:text-blue-200">
+                  Wechseln Sie zum "SchILD Import" Tab, um mit der Synchronisation Ihrer Benutzer zu beginnen.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-center space-x-4">
+          <button
+            onClick={onBack}
+            className="flex items-center space-x-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors shadow-lg hover:shadow-xl"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            <span>Zur Startseite</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show normal registration flow when not authenticated
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="text-center">
