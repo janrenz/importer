@@ -32,6 +32,9 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [emailFilter, setEmailFilter] = useState<'all' | 'verified' | 'unverified'>('all');
+
 
   const loadUsers = useCallback(async (page: number = 1, search: string = '') => {
     if (!isKeycloakAuthenticated) return;
@@ -41,19 +44,22 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
 
     try {
       const client = new KeycloakClient(keycloakConfig);
-      const response = await fetch(
-        `${keycloakConfig.url}/admin/realms/${keycloakConfig.realm}/users?` +
-        new URLSearchParams({
-          first: ((page - 1) * USERS_PER_PAGE).toString(),
-          max: USERS_PER_PAGE.toString(),
-          ...(search && { search }),
-        }),
-        {
-          headers: {
-            'Authorization': `Bearer ${sessionStorage.getItem('oauth2_access_token')}`,
-            'Content-Type': 'application/json',
-          },
-        }
+      
+      // Build query parameters including filters
+      const params = new URLSearchParams({
+        first: ((page - 1) * USERS_PER_PAGE).toString(),
+        max: USERS_PER_PAGE.toString(),
+        ...(search && { search }),
+      });
+
+      // Add server-side filters
+      if (statusFilter === 'active') params.append('enabled', 'true');
+      if (statusFilter === 'inactive') params.append('enabled', 'false');
+      // Note: emailVerified filter might not be supported by Keycloak Admin API
+      // We'll handle this client-side instead
+
+      const response = await client.authenticatedFetch(
+        `${keycloakConfig.url}/admin/realms/${keycloakConfig.realm}/users?${params}`
       );
 
       if (!response.ok) {
@@ -62,16 +68,14 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
 
       const usersData = await response.json();
       
-      // Get total count for pagination
-      const countResponse = await fetch(
-        `${keycloakConfig.url}/admin/realms/${keycloakConfig.realm}/users/count?` +
-        new URLSearchParams(search ? { search } : {}),
-        {
-          headers: {
-            'Authorization': `Bearer ${sessionStorage.getItem('oauth2_access_token')}`,
-            'Content-Type': 'application/json',
-          },
-        }
+      // Get total count for pagination with same filters
+      const countParams = new URLSearchParams(search ? { search } : {});
+      if (statusFilter === 'active') countParams.append('enabled', 'true');
+      if (statusFilter === 'inactive') countParams.append('enabled', 'false');
+      // EmailVerified filter not included in count as it's handled client-side
+
+      const countResponse = await client.authenticatedFetch(
+        `${keycloakConfig.url}/admin/realms/${keycloakConfig.realm}/users/count?${countParams}`
       );
 
       const count = countResponse.ok ? await countResponse.json() : usersData.length;
@@ -84,7 +88,7 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
     } finally {
       setLoading(false);
     }
-  }, [keycloakConfig, isKeycloakAuthenticated]);
+  }, [keycloakConfig, isKeycloakAuthenticated, statusFilter, emailFilter]);
 
   useEffect(() => {
     loadUsers(1, searchTerm);
@@ -99,6 +103,18 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
     loadUsers(page, searchTerm);
   };
 
+  const handleStatusFilterChange = (newFilter: 'all' | 'active' | 'inactive') => {
+    setStatusFilter(newFilter);
+    setCurrentPage(1); // Reset to first page
+    loadUsers(1, searchTerm);
+  };
+
+  const handleEmailFilterChange = (newFilter: 'all' | 'verified' | 'unverified') => {
+    setEmailFilter(newFilter);
+    setCurrentPage(1); // Reset to first page
+    loadUsers(1, searchTerm);
+  };
+
   const handleSelectUser = (userId: string) => {
     const newSelected = new Set(selectedUsers);
     if (newSelected.has(userId)) {
@@ -110,10 +126,10 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
   };
 
   const handleSelectAll = () => {
-    if (selectedUsers.size === users.length) {
+    if (selectedUsers.size === filteredUsers.length) {
       setSelectedUsers(new Set());
     } else {
-      setSelectedUsers(new Set(users.map(u => u.id)));
+      setSelectedUsers(new Set(filteredUsers.map(u => u.id)));
     }
   };
 
@@ -155,6 +171,15 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
       setBulkActionLoading(false);
     }
   };
+
+  // Apply client-side email verification filter (since server-side might not support it)
+  const filteredUsers = users.filter(user => {
+    // Email verification filter (client-side)
+    if (emailFilter === 'verified' && !user.emailVerified) return false;
+    if (emailFilter === 'unverified' && user.emailVerified) return false;
+    
+    return true;
+  });
 
   const totalPages = Math.ceil(totalUsers / USERS_PER_PAGE);
 
@@ -230,6 +255,50 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
             </svg>
           </button>
         </form>
+
+        {/* Filters */}
+        <div className="flex flex-col sm:flex-row gap-4 mt-4">
+          {/* Filter Icon */}
+          <div className="flex items-center gap-2">
+            <svg className="w-5 h-5 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+            <span className="text-sm font-medium text-orange-700 dark:text-orange-300">Filter:</span>
+          </div>
+
+          {/* Status Filter */}
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-orange-700 dark:text-orange-300">
+              Status:
+            </label>
+            <select
+              value={statusFilter}
+              onChange={(e) => handleStatusFilterChange(e.target.value as 'all' | 'active' | 'inactive')}
+              className="px-3 py-2 text-sm border border-orange-200 dark:border-orange-700 rounded-lg bg-white dark:bg-stone-800 text-orange-900 dark:text-orange-100 focus:outline-none focus:ring-2 focus:ring-orange-500"
+            >
+              <option value="all">Alle Status</option>
+              <option value="active">Aktiv</option>
+              <option value="inactive">Inaktiv</option>
+            </select>
+          </div>
+
+          {/* Email Verification Filter */}
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-orange-700 dark:text-orange-300">
+              E-Mail:
+            </label>
+            <select
+              value={emailFilter}
+              onChange={(e) => handleEmailFilterChange(e.target.value as 'all' | 'verified' | 'unverified')}
+              className="px-3 py-2 text-sm border border-orange-200 dark:border-orange-700 rounded-lg bg-white dark:bg-stone-800 text-orange-900 dark:text-orange-100 focus:outline-none focus:ring-2 focus:ring-orange-500"
+            >
+              <option value="all">Alle E-Mail Status</option>
+              <option value="verified">Bestätigt</option>
+              <option value="unverified">Nicht bestätigt</option>
+            </select>
+          </div>
+
+        </div>
       </div>
 
       {/* Bulk Actions */}
@@ -313,7 +382,7 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto mb-4"></div>
             <p className="text-orange-600 dark:text-orange-400">Benutzer werden geladen...</p>
           </div>
-        ) : users.length > 0 ? (
+        ) : filteredUsers.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-orange-50 dark:bg-orange-900/20">
@@ -321,7 +390,7 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
                   <th className="px-6 py-3 text-left text-xs font-medium text-orange-600 dark:text-orange-400 uppercase tracking-wider">
                     <input
                       type="checkbox"
-                      checked={selectedUsers.size > 0 && selectedUsers.size === users.length}
+                      checked={selectedUsers.size > 0 && selectedUsers.size === filteredUsers.length}
                       onChange={handleSelectAll}
                       className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
                     />
@@ -344,7 +413,7 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
                 </tr>
               </thead>
               <tbody className="divide-y divide-orange-200 dark:divide-orange-700">
-                {users.map((user) => (
+                {filteredUsers.map((user) => (
                   <tr key={user.id} className="hover:bg-orange-50 dark:hover:bg-orange-900/10">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <input
@@ -424,7 +493,9 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
               Keine Benutzer gefunden
             </h3>
             <p className="text-sm text-orange-600 dark:text-orange-400">
-              {searchTerm ? 'Versuchen Sie einen anderen Suchbegriff.' : 'Es sind keine Benutzer in Keycloak vorhanden.'}
+              {searchTerm || statusFilter !== 'all' || emailFilter !== 'all' 
+                ? 'Keine Benutzer entsprechen den aktuellen Filtern.' 
+                : 'Es sind keine Benutzer in Keycloak vorhanden.'}
             </p>
           </div>
         )}

@@ -157,6 +157,113 @@ export class KeycloakClient {
   }
 
   /**
+   * Refreshes the access token using the refresh token
+   */
+  async refreshAccessToken(): Promise<boolean> {
+    const refreshToken = sessionStorage.getItem('oauth2_refresh_token');
+    if (!refreshToken) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('No refresh token available');
+      }
+      return false;
+    }
+
+    try {
+      const response = await fetch(`${this.config.url}/realms/${this.config.realm}/protocol/openid-connect/token`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          grant_type: 'refresh_token',
+          client_id: this.config.clientId,
+          refresh_token: refreshToken,
+        }),
+      });
+
+      if (!response.ok) {
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Token refresh failed:', response.status);
+        }
+        // Clear tokens on refresh failure
+        this.performLocalLogout();
+        return false;
+      }
+
+      const tokenResponse = await response.json();
+      this.accessToken = tokenResponse.access_token;
+      
+      // Update stored tokens
+      sessionStorage.setItem('oauth2_access_token', this.accessToken);
+      if (tokenResponse.refresh_token) {
+        sessionStorage.setItem('oauth2_refresh_token', tokenResponse.refresh_token);
+      }
+
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Token refreshed successfully');
+      }
+      return true;
+    } catch (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Token refresh error:', error);
+      }
+      this.performLocalLogout();
+      return false;
+    }
+  }
+
+  /**
+   * Makes an authenticated request with automatic token refresh
+   */
+  async authenticatedFetch(url: string, options: RequestInit = {}): Promise<Response> {
+    if (!this.accessToken) {
+      throw new Error('Not authenticated');
+    }
+
+    const requestOptions = {
+      ...options,
+      headers: {
+        'Authorization': `Bearer ${this.accessToken}`,
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+    };
+
+    try {
+      const response = await fetch(url, requestOptions);
+      
+      // If token expired, try to refresh and retry
+      if (response.status === 401) {
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Token expired, attempting refresh...');
+        }
+        
+        const refreshed = await this.refreshAccessToken();
+        if (refreshed) {
+          // Retry with new token
+          const newRequestOptions = {
+            ...requestOptions,
+            headers: {
+              ...requestOptions.headers,
+              'Authorization': `Bearer ${this.accessToken}`,
+            },
+          };
+          return fetch(url, newRequestOptions);
+        } else {
+          throw new Error('Authentication expired and refresh failed');
+        }
+      }
+
+      return response;
+    } catch (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Authenticated fetch error:', error);
+      }
+      throw error;
+    }
+  }
+
+  /**
    * Checks if OAuth2 callback is pending (code available in session)
    */
   isCallbackPending(): boolean {
