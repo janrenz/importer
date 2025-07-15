@@ -68,6 +68,22 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
 
       const usersData = await response.json();
       
+      // Get current user profile to exclude from list
+      let currentUserId: string | null = null;
+      try {
+        const currentUserProfile = await client.getCurrentUserProfile();
+        currentUserId = currentUserProfile.sub || currentUserProfile.id;
+      } catch (error) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Could not fetch current user profile to exclude from list:', error);
+        }
+      }
+      
+      // Filter out the current user from the list
+      const filteredUsersData = currentUserId 
+        ? usersData.filter((user: KeycloakUser) => user.id !== currentUserId)
+        : usersData;
+      
       // Get total count for pagination with same filters
       const countParams = new URLSearchParams(search ? { search } : {});
       if (statusFilter === 'active') countParams.append('enabled', 'true');
@@ -78,9 +94,9 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
         `${keycloakConfig.url}/admin/realms/${keycloakConfig.realm}/users/count?${countParams}`
       );
 
-      const count = countResponse.ok ? await countResponse.json() : usersData.length;
+      const count = countResponse.ok ? await countResponse.json() : filteredUsersData.length;
       
-      setUsers(usersData);
+      setUsers(filteredUsersData);
       setTotalUsers(count);
       setCurrentPage(page);
     } catch (err) {
@@ -136,6 +152,31 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
   const handleBulkAction = async (action: 'activate' | 'deactivate' | 'delete') => {
     if (selectedUsers.size === 0) return;
     
+    // Security confirmation dialogs
+    let confirmMessage = '';
+    let confirmTitle = '';
+    
+    switch (action) {
+      case 'delete':
+        confirmTitle = 'Benutzer löschen';
+        confirmMessage = `Sind Sie sicher, dass Sie ${selectedUsers.size} Benutzer PERMANENT löschen möchten?\n\nDiese Aktion kann NICHT rückgängig gemacht werden!`;
+        break;
+      case 'deactivate':
+        confirmTitle = 'Benutzer deaktivieren';
+        confirmMessage = `Sind Sie sicher, dass Sie ${selectedUsers.size} Benutzer deaktivieren möchten?\n\nDeaktivierte Benutzer können sich nicht mehr anmelden.`;
+        break;
+      case 'activate':
+        confirmTitle = 'Benutzer aktivieren';
+        confirmMessage = `Sind Sie sicher, dass Sie ${selectedUsers.size} Benutzer aktivieren möchten?`;
+        break;
+    }
+    
+    // Show confirmation dialog
+    const confirmed = window.confirm(`${confirmTitle}\n\n${confirmMessage}`);
+    if (!confirmed) {
+      return; // User cancelled
+    }
+    
     setBulkActionLoading(true);
     setError(null);
     
@@ -181,6 +222,15 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
     return true;
   });
 
+  // Extract 11-digit teacher ID from user ID
+  const extractTeacherID = (userId: string): string => {
+    // Extract only numbers from the user ID
+    const numbers = userId.replace(/[^0-9]/g, '');
+    
+    // Return the first 11 digits if available, otherwise return the full number string
+    return numbers.length >= 11 ? numbers.substring(0, 11) : numbers;
+  };
+
   const totalPages = Math.ceil(totalUsers / USERS_PER_PAGE);
 
   if (!isKeycloakAuthenticated) {
@@ -204,7 +254,7 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-6">
       {/* Header */}
       <div className="card p-4">
         <div className="flex items-center justify-between mb-4">
@@ -304,7 +354,7 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
       {/* Bulk Actions */}
       {selectedUsers.size > 0 && (
         <div className="card p-4 bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center space-x-3">
               <div className="flex items-center space-x-1">
                 <svg className="w-5 h-5 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -315,16 +365,16 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
                 </span>
               </div>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 onClick={() => handleBulkAction('activate')}
                 disabled={bulkActionLoading}
-                className="btn-secondary text-sm px-3 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white border-green-600 hover:border-green-700"
+                className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:bg-green-400 border border-green-600 hover:border-green-700 rounded-lg transition-colors"
               >
                 {bulkActionLoading ? (
-                  <div className="w-4 h-4 mr-1 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <div className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
-                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 )}
@@ -333,12 +383,12 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
               <button
                 onClick={() => handleBulkAction('deactivate')}
                 disabled={bulkActionLoading}
-                className="btn-secondary text-sm px-3 py-2 bg-yellow-600 hover:bg-yellow-700 disabled:bg-yellow-400 text-white border-yellow-600 hover:border-yellow-700"
+                className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-yellow-600 hover:bg-yellow-700 disabled:bg-yellow-400 border border-yellow-600 hover:border-yellow-700 rounded-lg transition-colors"
               >
                 {bulkActionLoading ? (
-                  <div className="w-4 h-4 mr-1 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <div className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
-                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728" />
                   </svg>
                 )}
@@ -347,12 +397,12 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
               <button
                 onClick={() => handleBulkAction('delete')}
                 disabled={bulkActionLoading}
-                className="btn-secondary text-sm px-3 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white border-red-600 hover:border-red-700"
+                className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:bg-red-400 border border-red-600 hover:border-red-700 rounded-lg transition-colors"
               >
                 {bulkActionLoading ? (
-                  <div className="w-4 h-4 mr-1 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <div className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
-                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
                 )}
@@ -410,11 +460,16 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
                   <th className="px-6 py-3 text-left text-xs font-medium text-orange-600 dark:text-orange-400 uppercase tracking-wider">
                     Typ
                   </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-orange-600 dark:text-orange-400 uppercase tracking-wider">
+                    Lehrer-ID
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-orange-200 dark:divide-orange-700">
                 {filteredUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-orange-50 dark:hover:bg-orange-900/10">
+                  <tr key={user.id} className={`hover:bg-orange-50 dark:hover:bg-orange-900/10 ${
+                    !user.enabled ? 'opacity-60 bg-red-50 dark:bg-red-900/10' : ''
+                  }`}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <input
                         type="checkbox"
@@ -425,23 +480,39 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="w-8 h-8 bg-gradient-to-br from-orange-400 to-red-500 rounded-full flex items-center justify-center mr-3">
+                        <div className={`w-8 h-8 bg-gradient-to-br ${
+                          user.enabled 
+                            ? 'from-orange-400 to-red-500' 
+                            : 'from-gray-400 to-gray-500'
+                        } rounded-full flex items-center justify-center mr-3`}>
                           <span className="text-xs font-medium text-white">
                             {(user.firstName?.[0] || user.username[0] || '?').toUpperCase()}
                           </span>
                         </div>
                         <div>
-                          <div className="text-sm font-medium text-orange-900 dark:text-orange-100">
+                          <div className={`text-sm font-medium ${
+                            user.enabled 
+                              ? 'text-orange-900 dark:text-orange-100' 
+                              : 'text-gray-600 dark:text-gray-400 line-through'
+                          }`}>
                             {user.firstName || user.lastName ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : user.username}
                           </div>
-                          <div className="text-xs text-orange-600 dark:text-orange-400">
+                          <div className={`text-xs ${
+                            user.enabled 
+                              ? 'text-orange-600 dark:text-orange-400' 
+                              : 'text-gray-500 dark:text-gray-500'
+                          }`}>
                             {user.username}
                           </div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-orange-900 dark:text-orange-100">
+                      <div className={`text-sm ${
+                        user.enabled 
+                          ? 'text-orange-900 dark:text-orange-100' 
+                          : 'text-gray-600 dark:text-gray-400'
+                      }`}>
                         {user.email || '-'}
                       </div>
                     </td>
@@ -459,23 +530,40 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-orange-600 dark:text-orange-400">
-                      {new Date(user.createdTimestamp).toLocaleDateString('de-DE', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <span className={user.enabled ? 'text-orange-600 dark:text-orange-400' : 'text-gray-500 dark:text-gray-500'}>
+                        {new Date(user.createdTimestamp).toLocaleDateString('de-DE', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                        user.attributes?.userType?.[0] === 'student' 
-                          ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300'
-                          : 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300'
+                        !user.enabled 
+                          ? 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                          : user.attributes?.userType?.[0] === 'student' 
+                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300'
+                            : 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300'
                       }`}>
                         {user.attributes?.userType?.[0] === 'student' ? 'Schüler' : 'Lehrkraft'}
                       </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      {user.attributes?.userType?.[0] === 'teacher' || !user.attributes?.userType?.[0] ? (
+                        <span className={`font-mono ${
+                          user.enabled 
+                            ? 'text-orange-600 dark:text-orange-400' 
+                            : 'text-gray-500 dark:text-gray-500'
+                        }`}>
+                          {extractTeacherID(user.id) || '-'}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
                     </td>
                   </tr>
                 ))}

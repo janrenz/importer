@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import ImportTab from '@/components/ImportTab';
 import CreateTab from '@/components/CreateTab';
-import DeleteTab from '@/components/DeleteTab';
+// import DeleteTab from '@/components/DeleteTab';
 import UsersTab from '@/components/UsersTab';
 import HelpTab from '@/components/HelpTab';
 import PrincipalRegistration from '@/components/PrincipalRegistration';
@@ -14,7 +14,7 @@ import LogoutButton from '@/components/LogoutButton';
 import { User, KeycloakConfig } from '@/types';
 import { KeycloakClient } from '@/lib/keycloakClient';
 
-type TabType = 'start' | 'import' | 'create' | 'delete' | 'principal' | 'users' | 'help' | 'logout';
+type TabType = 'start' | 'import' | 'create' | 'principal' | 'users' | 'help' | 'logout';
 
 export default function HomePage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -180,15 +180,15 @@ export default function HomePage() {
         </svg>
       ),
     },
-    {
-      id: 'delete' as TabType,
-      label: 'Löschen',
-      icon: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-        </svg>
-      ),
-    },
+    // {
+    //   id: 'delete' as TabType,
+    //   label: 'Löschen',
+    //   icon: (
+    //     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    //       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+    //     </svg>
+    //   ),
+    // },
     {
       id: 'help' as TabType,
       label: 'Hilfe',
@@ -405,14 +405,14 @@ export default function HomePage() {
             isKeycloakAuthenticated={isKeycloakAuthenticated}
           />
         );
-      case 'delete':
-        return (
-          <DeleteTab
-            keycloakConfig={keycloakConfig}
-            xmlUsers={users}
-            isKeycloakAuthenticated={isKeycloakAuthenticated}
-          />
-        );
+      // case 'delete':
+      //   return (
+      //     <DeleteTab
+      //       keycloakConfig={keycloakConfig}
+      //       xmlUsers={users}
+      //       isKeycloakAuthenticated={isKeycloakAuthenticated}
+      //     />
+      //   );
       case 'users':
         return (
           <UsersTab
@@ -532,11 +532,6 @@ export default function HomePage() {
                    userProfile?.attributes?.schulnummer ? `Schule: ${userProfile.attributes.schulnummer}` :
                    userProfile?.attributes?.schulnummer?.[0] ? `Schule: ${userProfile.attributes.schulnummer[0]}` :
                    isKeycloakAuthenticated ? 'Angemeldet (Schulnummer nicht verfügbar)' : 'Keycloak Integration'}
-                  {process.env.NODE_ENV === 'development' && userProfile && (
-                    <span className="ml-2 text-xs text-red-500">
-                      (Profile: {JSON.stringify(userProfile, null, 2).slice(0, 200)}...)
-                    </span>
-                  )}
                 </p>
               </div>
             </div>
