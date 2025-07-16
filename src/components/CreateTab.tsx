@@ -1,9 +1,11 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { User, KeycloakConfig, SyncableAttribute } from '@/types';
 import { KeycloakClient } from '@/lib/keycloakClient';
 import { parseCSVFile, generateMappingReport, processCSVWithMapping, generateUserIdFromEmail } from '@/lib/csvParser';
+import { requiresTeacherID, isValidSchILDID } from '@/lib/schoolData';
+import { useUserProfile } from '@/contexts/UserProfileContext';
 import CSVFieldMapper from './CSVFieldMapper';
 import SyncProgress from './SyncProgress';
 
@@ -20,6 +22,7 @@ interface ManualUser {
   lastName: string;
   email: string;
   userType: 'student' | 'teacher';
+  schildId?: string;
 }
 
 interface SyncResult {
@@ -36,8 +39,9 @@ interface CreateTabProps {
 
 export default function CreateTab({ keycloakConfig, isKeycloakAuthenticated }: CreateTabProps) {
   const [manualUsers, setManualUsers] = useState<ManualUser[]>([
-    { id: '1', firstName: '', lastName: '', email: '', userType: 'teacher' }
+    { id: '1', firstName: '', lastName: '', email: '', userType: 'teacher', schildId: '' }
   ]);
+  const { schulnummer: currentUserSchoolId } = useUserProfile();
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncResults, setSyncResults] = useState<SyncResult[]>([]);
   const [syncComplete, setSyncComplete] = useState(false);
@@ -56,6 +60,8 @@ export default function CreateTab({ keycloakConfig, isKeycloakAuthenticated }: C
     sampleData: string[][];
   }>({ isOpen: false, csvContent: '', headers: [], autoMapping: {}, sampleData: [] });
 
+  // Note: Current user's school information is now provided by the UserProfileContext
+
   const addRow = useCallback(() => {
     const newId = (Math.max(...manualUsers.map(u => parseInt(u.id))) + 1).toString();
     setManualUsers(prev => [...prev, {
@@ -63,7 +69,8 @@ export default function CreateTab({ keycloakConfig, isKeycloakAuthenticated }: C
       firstName: '',
       lastName: '',
       email: '',
-      userType: 'teacher'
+      userType: 'teacher',
+      schildId: ''
     }]);
     // Reset sync state when data changes
     setSyncResults([]);
@@ -132,7 +139,8 @@ export default function CreateTab({ keycloakConfig, isKeycloakAuthenticated }: C
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
-        userType: user.userType
+        userType: user.userType,
+        schildId: user.schildId || ''
       }));
 
       // Add to existing users or replace if starting fresh
@@ -190,7 +198,8 @@ export default function CreateTab({ keycloakConfig, isKeycloakAuthenticated }: C
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
-        userType: user.userType
+        userType: user.userType,
+        schildId: user.schildId || ''
       }));
 
       // Add to existing users or replace if starting fresh
@@ -238,7 +247,7 @@ export default function CreateTab({ keycloakConfig, isKeycloakAuthenticated }: C
   const clearAllUsers = useCallback(() => {
     const confirmClear = confirm('Möchten Sie alle Benutzer aus der Tabelle entfernen?');
     if (confirmClear) {
-      setManualUsers([{ id: '1', firstName: '', lastName: '', email: '', userType: 'teacher' }]);
+      setManualUsers([{ id: '1', firstName: '', lastName: '', email: '', userType: 'teacher', schildId: '' }]);
       setSyncResults([]);
       setSyncComplete(false);
       setCsvUploadStatus({ isProcessing: false, error: null, lastMapping: null, importedCount: 0 });
@@ -270,7 +279,7 @@ export default function CreateTab({ keycloakConfig, isKeycloakAuthenticated }: C
         lastName: user.lastName.trim(),
         email: user.email.trim().toLowerCase(),
         userType: user.userType,
-        schildId: `manual-${finalId}`,
+        schildId: user.schildId?.trim() || `manual-${finalId}`,
         klasse: user.userType === 'student' ? 'Manual' : undefined
       };
     });
@@ -289,6 +298,16 @@ export default function CreateTab({ keycloakConfig, isKeycloakAuthenticated }: C
     if (usersToSync.length === 0) {
       alert('Nur Lehrkräfte können synchronisiert werden. Bitte wählen Sie mindestens eine Lehrkraft aus.');
       return;
+    }
+
+    // Check if school is public and requires teacher IDs
+    if (currentUserSchoolId && requiresTeacherID(currentUserSchoolId)) {
+      const teachersWithInvalidId = usersToSync.filter(teacher => !isValidSchILDID(teacher.schildId, currentUserSchoolId));
+      if (teachersWithInvalidId.length > 0) {
+        const teacherNames = teachersWithInvalidId.map(t => `${t.firstName} ${t.lastName}`).join(', ');
+        alert(`Für öffentliche Schulen sind echte SchILD-IDs (nicht automatisch generierte) für alle Lehrkräfte erforderlich.\n\nFolgende Lehrkräfte haben keine gültige SchILD-ID und können nicht synchronisiert werden:\n${teacherNames}\n\nBitte geben Sie echte SchILD-IDs ein oder verwenden Sie den XML-Import für öffentliche Schulen.`);
+        return;
+      }
     }
 
     if (!keycloakConfig.url || !keycloakConfig.realm || !keycloakConfig.clientId || !keycloakConfig.redirectUri) {
@@ -450,6 +469,7 @@ export default function CreateTab({ keycloakConfig, isKeycloakAuthenticated }: C
                     <th className="text-left py-3 px-2 text-sm font-medium text-slate-600 dark:text-slate-400">Vorname</th>
                     <th className="text-left py-3 px-2 text-sm font-medium text-slate-600 dark:text-slate-400">Nachname</th>
                     <th className="text-left py-3 px-2 text-sm font-medium text-slate-600 dark:text-slate-400">E-Mail</th>
+                    <th className="text-left py-3 px-2 text-sm font-medium text-slate-600 dark:text-slate-400">SchILD-ID</th>
                     <th className="text-left py-3 px-2 text-sm font-medium text-slate-600 dark:text-slate-400">ID</th>
                     <th className="text-left py-3 px-2 text-sm font-medium text-slate-600 dark:text-slate-400">Typ</th>
                     <th className="text-left py-3 px-2 text-sm font-medium text-slate-600 dark:text-slate-400">Aktionen</th>
@@ -494,6 +514,24 @@ export default function CreateTab({ keycloakConfig, isKeycloakAuthenticated }: C
                             placeholder="email@example.com"
                             className="w-full px-2 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           />
+                        </td>
+                        <td className="py-3 px-2">
+                          <input
+                            type="text"
+                            value={user.schildId || ''}
+                            onChange={(e) => updateUser(user.id, 'schildId', e.target.value)}
+                            placeholder={currentUserSchoolId && requiresTeacherID(currentUserSchoolId) ? "Erforderlich für öffentliche Schulen" : "Optional"}
+                            className={`w-full px-2 py-2 text-sm border rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:border-transparent ${
+                              currentUserSchoolId && requiresTeacherID(currentUserSchoolId) && user.userType === 'teacher' && !isValidSchILDID(user.schildId, currentUserSchoolId)
+                                ? 'border-red-300 dark:border-red-600 focus:ring-red-500'
+                                : 'border-slate-300 dark:border-slate-600 focus:ring-blue-500'
+                            }`}
+                          />
+                          {currentUserSchoolId && requiresTeacherID(currentUserSchoolId) && user.userType === 'teacher' && !isValidSchILDID(user.schildId, currentUserSchoolId) && (
+                            <div className="text-xs text-red-600 dark:text-red-400 mt-1">
+                              Echte SchILD-ID erforderlich
+                            </div>
+                          )}
                         </td>
                         <td className="py-3 px-2">
                           <div className="text-sm font-mono text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-700 px-2 py-2 rounded border">

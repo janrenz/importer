@@ -11,23 +11,32 @@ import SidePanel from '@/components/SidePanel';
 import Footer from '@/components/Footer';
 import FileUpload from '@/components/FileUpload';
 import LogoutButton from '@/components/LogoutButton';
+import SchoolInfo from '@/components/SchoolInfo';
+import { UserProfileProvider, useUserProfile } from '@/contexts/UserProfileContext';
 import { User, KeycloakConfig } from '@/types';
 import { KeycloakClient } from '@/lib/keycloakClient';
 
 type TabType = 'start' | 'import' | 'create' | 'principal' | 'users' | 'help' | 'logout';
 
-export default function HomePage() {
+interface AppContentProps {
+  keycloakConfig: KeycloakConfig;
+  setKeycloakConfig: (config: KeycloakConfig) => void;
+  isKeycloakAuthenticated: boolean;
+  setIsKeycloakAuthenticated: (authenticated: boolean) => void;
+}
+
+function AppContent({ 
+  keycloakConfig, 
+  setKeycloakConfig, 
+  isKeycloakAuthenticated, 
+  setIsKeycloakAuthenticated 
+}: AppContentProps) {
   const [users, setUsers] = useState<User[]>([]);
   const [activeTab, setActiveTab] = useState<TabType>('start');
-  const [keycloakConfig, setKeycloakConfig] = useState<KeycloakConfig>({
-    url: 'https://login.fwu-id-prod.ionos.intension.eu',
-    realm: 'NutzerverwaltungNRW',
-    clientId: 'nrwpublic',
-    redirectUri: 'https://localhost:3000/callback', // Will be updated in useEffect
-  });
-  const [isKeycloakAuthenticated, setIsKeycloakAuthenticated] = useState(false);
   const [isLoginLoading, setIsLoginLoading] = useState(false);
-  const [userProfile, setUserProfile] = useState<any>(null);
+  
+  // Use the context instead of fetching user profile directly
+  const { userProfile, error: profileError, schulnummer, refreshProfile } = useUserProfile();
 
   const handleUsersLoaded = useCallback((loadedUsers: User[]) => {
     setUsers(loadedUsers);
@@ -35,29 +44,24 @@ export default function HomePage() {
 
   const [callbackPending, setCallbackPending] = useState(false);
 
-  // Fetch user profile when authenticated
-  const fetchUserProfile = useCallback(async (client: KeycloakClient) => {
-    try {
-      const profile = await client.getCurrentUserProfile();
-      console.log('User profile fetched:', profile);
-      
-      // Check if user has the required "LEIT" role
-      const userRole = profile.rolle || profile.attributes?.rolle?.[0] || profile.attributes?.rolle;
-      if (userRole !== 'LEIT') {
-        alert('Dieses Tool kann nur mit einem Account der Schulleitung verwendet werden. Ihre Rolle: ' + (userRole || 'Nicht definiert'));
-        // Perform logout and redirect
-        await client.logout();
-        setIsKeycloakAuthenticated(false);
-        setUserProfile(null);
-        return;
-      }
-      
-      setUserProfile(profile);
-    } catch (error) {
-      console.error('Failed to fetch user profile:', error);
-      setUserProfile(null);
+  // Handle profile errors (like role validation failures)
+  useEffect(() => {
+    if (profileError && isKeycloakAuthenticated) {
+      alert(profileError);
+      // Perform logout if there's a profile error
+      const logout = async () => {
+        try {
+          const client = new KeycloakClient(keycloakConfig);
+          await client.logout();
+        } catch (error) {
+          console.error('Logout error:', error);
+        } finally {
+          setIsKeycloakAuthenticated(false);
+        }
+      };
+      logout();
     }
-  }, []);
+  }, [profileError, isKeycloakAuthenticated, keycloakConfig]);
 
   // Check for OAuth2 callback completion on mount
   useEffect(() => {
@@ -100,8 +104,9 @@ export default function HomePage() {
             console.log('Login completion result:', success);
           }
           setIsKeycloakAuthenticated(success);
+          // Manually refresh profile after successful authentication to ensure header updates
           if (success) {
-            await fetchUserProfile(keycloakClient);
+            setTimeout(() => refreshProfile(), 100);
           }
         } catch (error) {
           console.error('OAuth2 completion error:', error);
@@ -113,8 +118,9 @@ export default function HomePage() {
       } else {
         const isAuth = keycloakClient.isAuthenticated();
         setIsKeycloakAuthenticated(isAuth);
+        // Manually refresh profile after successful authentication detection
         if (isAuth) {
-          await fetchUserProfile(keycloakClient);
+          setTimeout(() => refreshProfile(), 100);
         }
       }
     };
@@ -557,12 +563,17 @@ export default function HomePage() {
                 <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
                   NRW telli Nutzerverwaltung für Schulleitungen
                 </h1>
-                <p className="text-sm text-slate-600 dark:text-slate-400">
-                  {userProfile?.schulnummer ? `Schule: ${userProfile.schulnummer}` : 
-                   userProfile?.attributes?.schulnummer ? `Schule: ${userProfile.attributes.schulnummer}` :
-                   userProfile?.attributes?.schulnummer?.[0] ? `Schule: ${userProfile.attributes.schulnummer[0]}` :
-                   isKeycloakAuthenticated ? 'Angemeldet (Schulnummer nicht verfügbar)' : 'Keycloak Integration'}
-                </p>
+                <div className="mt-1">
+                  {isKeycloakAuthenticated ? (
+                    <SchoolInfo 
+                      schulnummer={schulnummer || undefined} 
+                    />
+                  ) : (
+                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                      Keycloak Integration
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
             <div className="flex items-center space-x-4">
@@ -580,7 +591,6 @@ export default function HomePage() {
                 onLogout={() => {
                   setIsKeycloakAuthenticated(false);
                   setUsers([]);
-                  setUserProfile(null);
                   setActiveTab('start');
                 }}
               />
@@ -644,4 +654,32 @@ export default function HomePage() {
       <Footer />
     </div>
   );
+}
+
+function MainContent() {
+  const [keycloakConfig, setKeycloakConfig] = useState<KeycloakConfig>({
+    url: 'https://login.fwu-id-prod.ionos.intension.eu',
+    realm: 'NutzerverwaltungNRW',
+    clientId: 'nrwpublic',
+    redirectUri: 'https://localhost:3000/callback',
+  });
+  const [isKeycloakAuthenticated, setIsKeycloakAuthenticated] = useState(false);
+
+  return (
+    <UserProfileProvider 
+      keycloakConfig={keycloakConfig} 
+      isAuthenticated={isKeycloakAuthenticated}
+    >
+      <AppContent 
+        keycloakConfig={keycloakConfig}
+        setKeycloakConfig={setKeycloakConfig}
+        isKeycloakAuthenticated={isKeycloakAuthenticated}
+        setIsKeycloakAuthenticated={setIsKeycloakAuthenticated}
+      />
+    </UserProfileProvider>
+  );
+}
+
+export default function HomePage() {
+  return <MainContent />;
 }

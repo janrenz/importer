@@ -2,6 +2,7 @@
 
 import { User } from '@/types';
 import { useState, useMemo } from 'react';
+import { requiresTeacherID, isValidSchILDID } from '@/lib/schoolData';
 
 interface UserListProps {
   users: User[];
@@ -12,6 +13,7 @@ interface UserListProps {
   onBulkDelete?: (userIds: string[]) => void;
   onBulkDeactivate?: (userIds: string[]) => void;
   onBulkActivate?: (userIds: string[]) => void;
+  currentUserSchoolId?: string | null;
 }
 
 export default function UserList({ 
@@ -22,7 +24,8 @@ export default function UserList({
   onDeselectAll,
   onBulkDelete,
   onBulkDeactivate,
-  onBulkActivate
+  onBulkActivate,
+  currentUserSchoolId
 }: UserListProps) {
   const [filter, setFilter] = useState<'all' | 'students' | 'teachers'>('all');
   const [gradeFilter, setGradeFilter] = useState<string>('all');
@@ -272,6 +275,29 @@ export default function UserList({
         </div>
       )}
 
+      {/* Public School Teacher ID Warning */}
+      {currentUserSchoolId && requiresTeacherID(currentUserSchoolId) && (() => {
+        const teachersWithInvalidId = users.filter(u => u.userType === 'teacher' && !isValidSchILDID(u.schildId, currentUserSchoolId));
+        return teachersWithInvalidId.length > 0 ? (
+          <div className="card p-3 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800">
+            <div className="flex items-start space-x-3">
+              <svg className="w-5 h-5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div>
+                <h4 className="text-sm font-medium text-red-900 dark:text-red-100 mb-1">Öffentliche Schule: Echte SchILD-IDs erforderlich</h4>
+                <p className="text-xs text-red-700 dark:text-red-300 leading-relaxed mb-2">
+                  Für öffentliche Schulen sind echte SchILD-IDs (nicht automatisch generierte) für alle Lehrkräfte erforderlich. {teachersWithInvalidId.length} Lehrkraft{teachersWithInvalidId.length > 1 ? 'en' : ''} ohne gültige ID {teachersWithInvalidId.length > 1 ? 'werden' : 'wird'} nicht synchronisiert.
+                </p>
+                <p className="text-xs text-red-700 dark:text-red-300 font-medium">
+                  Ungültige IDs: {teachersWithInvalidId.map(t => `${t.firstName} ${t.lastName}`).join(', ')}
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : null;
+      })()}
+
       {filteredUsers.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-slate-500 dark:text-slate-400">
@@ -286,7 +312,11 @@ export default function UserList({
           {filteredUsers.map((user, index) => {
             const isStudentDisabled = user.userType === 'student';
             const hasNoEmail = !user.email || user.email.trim() === '';
-            const isDisabled = isStudentDisabled || hasNoEmail;
+            const isMissingRequiredId = user.userType === 'teacher' && 
+                                       currentUserSchoolId && 
+                                       requiresTeacherID(currentUserSchoolId) && 
+                                       !isValidSchILDID(user.schildId, currentUserSchoolId);
+            const isDisabled = isStudentDisabled || hasNoEmail || isMissingRequiredId;
             return (
             <div key={user.id} className="animate-fade-in" style={{animationDelay: `${index * 0.05}s`}}>
               <div className={`card p-4 transition-all duration-200 ${
@@ -381,6 +411,20 @@ export default function UserList({
                     </div>
                   )}
                 </div>
+
+                {/* Missing ID Warning for Public Schools */}
+                {isMissingRequiredId && (
+                  <div className="mt-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                    <div className="flex items-center space-x-2">
+                      <svg className="w-4 h-4 text-red-600 dark:text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <p className="text-xs text-red-700 dark:text-red-300 font-medium">
+                        Echte SchILD-ID erforderlich (öffentliche Schule)
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

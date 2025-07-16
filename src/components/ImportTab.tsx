@@ -7,6 +7,8 @@ import SyncProgress from './SyncProgress';
 import FileUpload from './FileUpload';
 import { User, KeycloakConfig, SyncableAttribute } from '@/types';
 import { KeycloakClient } from '@/lib/keycloakClient';
+import { requiresTeacherID, isValidSchILDID } from '@/lib/schoolData';
+import { useUserProfile } from '@/contexts/UserProfileContext';
 
 const AVAILABLE_ATTRIBUTES: SyncableAttribute[] = [
   { key: 'firstName', label: 'First Name', required: true },
@@ -41,6 +43,7 @@ export default function ImportTab({ keycloakConfig, isKeycloakAuthenticated, use
   const [syncComplete, setSyncComplete] = useState(false);
   const [isDryRun, setIsDryRun] = useState(false);
   const [showExpertSettings, setShowExpertSettings] = useState(false);
+  const { schulnummer: currentUserSchoolId } = useUserProfile();
 
   // Reset state when users change
   React.useEffect(() => {
@@ -48,6 +51,8 @@ export default function ImportTab({ keycloakConfig, isKeycloakAuthenticated, use
     setSyncResults([]);
     setSyncComplete(false);
   }, [users]);
+
+  // Note: Current user's school information is now provided by the UserProfileContext
 
   const handleUserSelection = useCallback((userId: string, selected: boolean) => {
     setSelectedUsers(prev => {
@@ -98,6 +103,16 @@ export default function ImportTab({ keycloakConfig, isKeycloakAuthenticated, use
     if (selectedTeachers.length === 0) {
       alert('Bitte wählen Sie mindestens eine Lehrkraft zum Synchronisieren aus.');
       return;
+    }
+
+    // Check if school is public and requires teacher IDs
+    if (currentUserSchoolId && requiresTeacherID(currentUserSchoolId)) {
+      const teachersWithInvalidId = selectedTeachers.filter(teacher => !isValidSchILDID(teacher.schildId, currentUserSchoolId));
+      if (teachersWithInvalidId.length > 0) {
+        const teacherNames = teachersWithInvalidId.map(t => `${t.firstName} ${t.lastName}`).join(', ');
+        alert(`Für öffentliche Schulen sind echte SchILD-IDs (nicht automatisch generierte) für alle Lehrkräfte erforderlich.\n\nFolgende Lehrkräfte haben keine gültige SchILD-ID und werden nicht synchronisiert:\n${teacherNames}\n\nBitte stellen Sie sicher, dass alle Lehrkräfte eine echte SchILD-ID aus dem Import haben.`);
+        return;
+      }
     }
 
     if (!dryRun && (!keycloakConfig.url || !keycloakConfig.realm || !keycloakConfig.clientId || !keycloakConfig.redirectUri)) {
@@ -286,6 +301,7 @@ export default function ImportTab({ keycloakConfig, isKeycloakAuthenticated, use
             onSelectionChange={handleUserSelection}
             onSelectAll={handleSelectAll}
             onDeselectAll={handleDeselectAll}
+            currentUserSchoolId={currentUserSchoolId}
           />
         </>
       )}

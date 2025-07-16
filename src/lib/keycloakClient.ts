@@ -872,7 +872,30 @@ export class KeycloakClient {
     }
 
     try {
-      const response = await this.authenticatedFetch(`${this.config.url}/admin/realms/${this.config.realm}/users/${userId}/execute-actions-email`, {
+      // First, get user details to check if email exists
+      const userResponse = await this.authenticatedFetch(`${this.config.url}/admin/realms/${this.config.realm}/users/${userId}`);
+      
+      if (!userResponse.ok) {
+        throw new Error(`Failed to get user details: ${userResponse.statusText}`);
+      }
+      
+      const user = await userResponse.json();
+      
+      if (!user.email) {
+        throw new Error('User has no email address configured');
+      }
+
+      // Use query parameters for the execute-actions-email endpoint
+      const url = new URL(`${this.config.url}/admin/realms/${this.config.realm}/users/${userId}/execute-actions-email`);
+      
+      // Add query parameters - these are often required for email functionality
+      url.searchParams.append('client_id', this.config.clientId);
+      url.searchParams.append('redirect_uri', this.config.redirectUri);
+      
+      // Some Keycloak configurations require lifespan parameter
+      url.searchParams.append('lifespan', '43200'); // 12 hours in seconds
+      
+      const response = await this.authenticatedFetch(url.toString(), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -881,7 +904,40 @@ export class KeycloakClient {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to send password reset email: ${response.statusText}`);
+        const errorText = await response.text();
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Password reset failed:', response.status, errorText);
+        }
+        
+        // Try without query parameters as fallback
+        if (response.status === 500) {
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Retrying password reset without query parameters...');
+          }
+          
+          const fallbackResponse = await this.authenticatedFetch(
+            `${this.config.url}/admin/realms/${this.config.realm}/users/${userId}/execute-actions-email`,
+            {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(['UPDATE_PASSWORD']),
+            }
+          );
+          
+          if (!fallbackResponse.ok) {
+            const fallbackErrorText = await fallbackResponse.text();
+            if (process.env.NODE_ENV === 'development') {
+              console.error('Fallback password reset also failed:', fallbackResponse.status, fallbackErrorText);
+            }
+            throw new Error(`Failed to send password reset email (${fallbackResponse.status}): ${fallbackResponse.statusText}`);
+          }
+          
+          return true;
+        }
+        
+        throw new Error(`Failed to send password reset email (${response.status}): ${response.statusText}`);
       }
 
       return true;

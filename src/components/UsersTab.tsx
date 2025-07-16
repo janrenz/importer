@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { KeycloakConfig } from '@/types';
 import { KeycloakClient } from '@/lib/keycloakClient';
+import { useUserProfile } from '@/contexts/UserProfileContext';
+import SchoolInfo from './SchoolInfo';
 
 interface KeycloakUser {
   id: string;
@@ -21,6 +23,15 @@ interface UsersTabProps {
   isKeycloakAuthenticated: boolean;
 }
 
+interface UserProfile {
+  sub?: string;
+  id?: string;
+  schulnummer?: string;
+  attributes?: {
+    schulnummer?: string | string[];
+  };
+}
+
 const USERS_PER_PAGE = 20;
 
 export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: UsersTabProps) {
@@ -33,6 +44,7 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [emailFilter, setEmailFilter] = useState<'all' | 'verified' | 'unverified'>('all');
+  const { userProfile, userId, schulnummer: currentUserSchoolId } = useUserProfile();
 
 
   const loadUsers = useCallback(async (page: number = 1, search: string = '') => {
@@ -44,20 +56,8 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
     try {
       const client = new KeycloakClient(keycloakConfig);
       
-      // Get current user profile for filtering
-      let currentUserId: string | null = null;
-      let currentUserSchoolId: string | null = null;
-      try {
-        const currentUserProfile = await client.getCurrentUserProfile();
-        currentUserId = currentUserProfile.sub || currentUserProfile.id;
-        currentUserSchoolId = currentUserProfile.schulnummer || 
-                             currentUserProfile.attributes?.schulnummer?.[0] || 
-                             currentUserProfile.attributes?.schulnummer;
-      } catch (error) {
-        if (process.env.NODE_ENV === 'development') {
-          console.warn('Could not fetch current user profile for filtering:', error);
-        }
-      }
+      // Current user profile is now provided by the UserProfileContext
+      // Use userId and currentUserSchoolId from the context
       
       // Build query parameters for API-level filtering
       const params = new URLSearchParams({
@@ -89,8 +89,8 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
       let filteredUsersData = usersData;
       
       // Filter out current user
-      if (currentUserId) {
-        filteredUsersData = filteredUsersData.filter((user: KeycloakUser) => user.id !== currentUserId);
+      if (userId) {
+        filteredUsersData = filteredUsersData.filter((user: KeycloakUser) => user.id !== userId);
       }
       
       // Get total count for pagination with same filters
@@ -116,7 +116,7 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
     } finally {
       setLoading(false);
     }
-  }, [keycloakConfig, isKeycloakAuthenticated, emailFilter]);
+  }, [keycloakConfig, isKeycloakAuthenticated, emailFilter, userId, currentUserSchoolId]);
 
   useEffect(() => {
     loadUsers(1, searchTerm);
@@ -281,9 +281,17 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
               <h2 className="text-xl font-bold text-orange-900 dark:text-orange-100">
                 Keycloak Benutzer
               </h2>
-              <p className="text-sm text-orange-600 dark:text-orange-400">
-                {totalUsers} Benutzer für Ihre Schule
-              </p>
+              <div className="space-y-1">
+                <p className="text-sm text-orange-600 dark:text-orange-400">
+                  {totalUsers} Benutzer für Ihre Schule
+                </p>
+                {currentUserSchoolId && (
+                  <SchoolInfo 
+                    schulnummer={currentUserSchoolId}
+                    className="text-xs"
+                  />
+                )}
+              </div>
             </div>
           </div>
           
