@@ -3,7 +3,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'SchILD Keycloak Sync',
-  description: 'Import and sync user data from SchILD/Logineo exports to Keycloak',
+  description: 'Import and sync user data from SchILD exports to Keycloak',
 };
 
 export default function RootLayout({

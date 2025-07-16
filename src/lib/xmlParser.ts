@@ -12,7 +12,7 @@ export function parseXMLFile(xmlContent: string): User[] {
     throw new Error('Invalid XML format');
   }
   
-  // Parse SchILD/Logineo format with <person> elements
+  // Parse SchILD format with <person> elements
   const persons = doc.querySelectorAll('person');
   
   if (persons.length === 0) {

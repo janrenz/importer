@@ -3,7 +3,7 @@
 import React, { useState, useCallback } from 'react';
 import { User, KeycloakConfig, SyncableAttribute } from '@/types';
 import { KeycloakClient } from '@/lib/keycloakClient';
-import { parseCSVFile, generateMappingReport, processCSVWithMapping } from '@/lib/csvParser';
+import { parseCSVFile, generateMappingReport, processCSVWithMapping, generateUserIdFromEmail } from '@/lib/csvParser';
 import CSVFieldMapper from './CSVFieldMapper';
 import SyncProgress from './SyncProgress';
 
@@ -128,7 +128,7 @@ export default function CreateTab({ keycloakConfig, isKeycloakAuthenticated }: C
       // Convert CSV users to manual users format
       const startId = Math.max(...manualUsers.map(u => parseInt(u.id)), 0) + 1;
       const newUsers = users.map((user, index) => ({
-        id: (startId + index).toString(),
+        id: user.id || (startId + index).toString(), // Use CSV ID if available, otherwise generate
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
@@ -186,7 +186,7 @@ export default function CreateTab({ keycloakConfig, isKeycloakAuthenticated }: C
       // Convert CSV users to manual users format
       const startId = Math.max(...manualUsers.map(u => parseInt(u.id)), 0) + 1;
       const newUsers = users.map((user, index) => ({
-        id: (startId + index).toString(),
+        id: user.id || (startId + index).toString(), // Use CSV ID if available, otherwise generate
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
@@ -256,15 +256,24 @@ export default function CreateTab({ keycloakConfig, isKeycloakAuthenticated }: C
   }, [manualUsers]);
 
   const convertToUsers = useCallback((manualUsers: ManualUser[]): User[] => {
-    return manualUsers.map(user => ({
-      id: user.id,
-      firstName: user.firstName.trim(),
-      lastName: user.lastName.trim(),
-      email: user.email.trim().toLowerCase(),
-      userType: user.userType,
-      schildId: `manual-${user.id}`,
-      klasse: user.userType === 'student' ? 'Manual' : undefined
-    }));
+    return manualUsers.map(user => {
+      // Check if user has a proper ID format (starts with ID- or contains 11 digits)
+      const hasProperIdFormat = user.id.startsWith('ID-') || /^\d{11}$/.test(user.id.replace(/[^0-9]/g, ''));
+      const hasSimpleNumericId = /^\d+$/.test(user.id);
+      
+      // Only generate ID if user doesn't have a proper ID and has a simple numeric ID
+      const finalId = !hasProperIdFormat && hasSimpleNumericId ? generateUserIdFromEmail(user.email) : user.id;
+      
+      return {
+        id: finalId,
+        firstName: user.firstName.trim(),
+        lastName: user.lastName.trim(),
+        email: user.email.trim().toLowerCase(),
+        userType: user.userType,
+        schildId: `manual-${finalId}`,
+        klasse: user.userType === 'student' ? 'Manual' : undefined
+      };
+    });
   }, []);
 
   const handleSync = async (dryRun: boolean = false) => {
@@ -274,8 +283,13 @@ export default function CreateTab({ keycloakConfig, isKeycloakAuthenticated }: C
       return;
     }
 
-    // Allow both teachers and students for sync
-    const usersToSync = validManualUsers;
+    // Only allow teachers for sync - students cannot be synchronized
+    const usersToSync = validManualUsers.filter(user => user.userType === 'teacher');
+    
+    if (usersToSync.length === 0) {
+      alert('Nur Lehrkräfte können synchronisiert werden. Bitte wählen Sie mindestens eine Lehrkraft aus.');
+      return;
+    }
 
     if (!keycloakConfig.url || !keycloakConfig.realm || !keycloakConfig.clientId || !keycloakConfig.redirectUri) {
       alert('Bitte füllen Sie alle Keycloak-Konfigurationsfelder aus.');
@@ -337,61 +351,59 @@ export default function CreateTab({ keycloakConfig, isKeycloakAuthenticated }: C
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <div className="xl:col-span-2">
-          <div className="card p-4">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
-                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-                    Benutzer manuell erstellen
-                  </h2>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
-                    Geben Sie Benutzerdaten direkt ein oder importieren Sie eine CSV-Datei
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                <label className="btn-secondary text-sm px-3 py-2 cursor-pointer">
-                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-                  </svg>
-                  {csvUploadStatus.isProcessing ? 'Verarbeite...' : 'CSV importieren'}
-                  <input
-                    type="file"
-                    accept=".csv"
-                    onChange={handleCSVUpload}
-                    disabled={csvUploadStatus.isProcessing}
-                    className="hidden"
-                  />
-                </label>
-                <button
-                  onClick={addRow}
-                  className="btn-primary text-sm px-3 py-2"
-                >
-                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                  Zeile hinzufügen
-                </button>
-                {manualUsers.length > 1 && (
-                  <button
-                    onClick={clearAllUsers}
-                    className="text-red-600 hover:text-red-700 text-sm px-3 py-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                    title="Alle Benutzer löschen"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                )}
-              </div>
+      <div className="card p-4">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
             </div>
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                Benutzer manuell erstellen
+              </h2>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Geben Sie Benutzerdaten direkt ein oder importieren Sie eine CSV-Datei
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <label className="btn-secondary text-sm px-3 py-2 cursor-pointer inline-flex items-center whitespace-nowrap">
+              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+              </svg>
+              {csvUploadStatus.isProcessing ? 'Verarbeite...' : 'CSV importieren'}
+              <input
+                type="file"
+                accept=".csv"
+                onChange={handleCSVUpload}
+                disabled={csvUploadStatus.isProcessing}
+                className="hidden"
+              />
+            </label>
+            <button
+              onClick={addRow}
+              className="btn-primary text-sm px-3 py-2 inline-flex items-center whitespace-nowrap"
+            >
+              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              Zeile hinzufügen
+            </button>
+            {manualUsers.length > 1 && (
+              <button
+                onClick={clearAllUsers}
+                className="text-red-600 hover:text-red-700 text-sm px-3 py-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors inline-flex items-center whitespace-nowrap"
+                title="Alle Benutzer löschen"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            )}
+          </div>
+        </div>
 
             {/* CSV Upload Status */}
             {csvUploadStatus.importedCount > 0 && (
@@ -438,6 +450,7 @@ export default function CreateTab({ keycloakConfig, isKeycloakAuthenticated }: C
                     <th className="text-left py-3 px-2 text-sm font-medium text-slate-600 dark:text-slate-400">Vorname</th>
                     <th className="text-left py-3 px-2 text-sm font-medium text-slate-600 dark:text-slate-400">Nachname</th>
                     <th className="text-left py-3 px-2 text-sm font-medium text-slate-600 dark:text-slate-400">E-Mail</th>
+                    <th className="text-left py-3 px-2 text-sm font-medium text-slate-600 dark:text-slate-400">ID</th>
                     <th className="text-left py-3 px-2 text-sm font-medium text-slate-600 dark:text-slate-400">Typ</th>
                     <th className="text-left py-3 px-2 text-sm font-medium text-slate-600 dark:text-slate-400">Aktionen</th>
                   </tr>
@@ -445,8 +458,16 @@ export default function CreateTab({ keycloakConfig, isKeycloakAuthenticated }: C
                 <tbody>
                   {manualUsers.map((user, index) => {
                     const isValid = user.firstName.trim() && user.lastName.trim() && user.email.trim() && user.email.includes('@');
+                    const isSyncable = isValid && user.userType === 'teacher';
+                    // Generate display ID - check if user has proper ID format first
+                    const hasProperIdFormat = user.id.startsWith('ID-') || /^\d{11}$/.test(user.id.replace(/[^0-9]/g, ''));
+                    const hasSimpleNumericId = /^\d+$/.test(user.id);
+                    const displayId = !hasProperIdFormat && hasSimpleNumericId && user.email.trim() ? generateUserIdFromEmail(user.email) : user.id;
+                    
                     return (
-                      <tr key={user.id} className="border-b border-slate-100 dark:border-slate-800">
+                      <tr key={user.id} className={`border-b border-slate-100 dark:border-slate-800 ${
+                        user.userType === 'student' ? 'opacity-60 bg-amber-50 dark:bg-amber-900/10' : ''
+                      }`}>
                         <td className="py-3 px-2">
                           <input
                             type="text"
@@ -475,6 +496,21 @@ export default function CreateTab({ keycloakConfig, isKeycloakAuthenticated }: C
                           />
                         </td>
                         <td className="py-3 px-2">
+                          <div className="text-sm font-mono text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-700 px-2 py-2 rounded border">
+                            {displayId}
+                            {!hasProperIdFormat && hasSimpleNumericId && (
+                              <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                                Generiert
+                              </div>
+                            )}
+                            {hasProperIdFormat && (
+                              <div className="text-xs text-green-600 dark:text-green-400 mt-1">
+                                Übernommen
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-3 px-2">
                           <select
                             value={user.userType}
                             onChange={(e) => updateUser(user.id, 'userType', e.target.value)}
@@ -486,7 +522,24 @@ export default function CreateTab({ keycloakConfig, isKeycloakAuthenticated }: C
                         </td>
                         <td className="py-3 px-2">
                           <div className="flex items-center space-x-2">
-                            <div className={`w-2 h-2 rounded-full ${isValid ? 'bg-green-500' : 'bg-red-500'}`} title={isValid ? 'Gültig' : 'Unvollständig'} />
+                            <div className={`w-2 h-2 rounded-full ${
+                              user.userType === 'student' 
+                                ? 'bg-amber-500' 
+                                : isSyncable 
+                                  ? 'bg-green-500' 
+                                  : 'bg-red-500'
+                            }`} title={
+                              user.userType === 'student' 
+                                ? 'Schüler - Nicht synchronisierbar' 
+                                : isSyncable 
+                                  ? 'Synchronisierbar' 
+                                  : 'Unvollständig'
+                            } />
+                            {user.userType === 'student' && (
+                              <span className="text-xs text-amber-600 dark:text-amber-400">
+                                Nicht synchronisierbar
+                              </span>
+                            )}
                             {manualUsers.length > 1 && (
                               <button
                                 onClick={() => removeRow(user.id)}
@@ -520,10 +573,10 @@ export default function CreateTab({ keycloakConfig, isKeycloakAuthenticated }: C
               </div>
             )}
 
-          </div>
         </div>
 
-        <div>
+        {/* Sync Section */}
+        <div className="animate-slide-up" style={{animationDelay: '0.3s'}}>
           {isSyncing || syncResults.length > 0 ? (
             <SyncProgress
               results={syncResults}
@@ -533,30 +586,32 @@ export default function CreateTab({ keycloakConfig, isKeycloakAuthenticated }: C
               onRunActualSync={isDryRun && syncComplete ? () => handleSync(false) : undefined}
             />
           ) : (
-            <div className="card p-4 sticky top-24">
-              <div className="text-center space-y-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto">
-                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-2">
-                    Benutzer erstellen
-                  </h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
-                    {validUsers.length > 0 
-                      ? `${validUsers.length} Benutzer bereit`
-                      : 'Geben Sie Benutzerdaten in die Tabelle ein'
-                    }
-                  </p>
+            <div className="card p-6">
+              <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
+                <div className="flex items-center space-x-4">
+                  <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center flex-shrink-0">
+                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  </div>
+                  <div className="text-left">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-1">
+                      Benutzer erstellen
+                    </h3>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                      {validUsers.length > 0 
+                        ? `${validUsers.length} Benutzer bereit`
+                        : 'Geben Sie Benutzerdaten in die Tabelle ein'
+                      }
+                    </p>
+                  </div>
                 </div>
                 
-                <div className="space-y-3">
+                <div className="flex justify-center w-full lg:w-auto lg:min-w-80">
                   <button
                     onClick={() => handleSync(false)}
                     disabled={!canSync}
-                    className={`w-full flex items-center justify-center py-3 px-4 rounded-xl font-medium transition-all duration-200 ${
+                    className={`flex-1 flex items-center justify-center py-3 px-4 rounded-xl font-medium transition-all duration-200 ${
                       canSync 
                         ? 'btn-primary shadow-lg hover:shadow-xl transform hover:scale-105' 
                         : 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
@@ -572,17 +627,16 @@ export default function CreateTab({ keycloakConfig, isKeycloakAuthenticated }: C
             </div>
           )}
         </div>
-      </div>
 
-      {/* CSV Field Mapping Dialog */}
-      <CSVFieldMapper
-        isOpen={fieldMappingDialog.isOpen}
-        onClose={handleMappingDialogClose}
-        onConfirm={handleManualMapping}
-        headers={fieldMappingDialog.headers}
-        autoMapping={fieldMappingDialog.autoMapping}
-        sampleData={fieldMappingDialog.sampleData}
-      />
-    </div>
-  );
-}
+        {/* CSV Field Mapping Dialog */}
+        <CSVFieldMapper
+          isOpen={fieldMappingDialog.isOpen}
+          onClose={handleMappingDialogClose}
+          onConfirm={handleManualMapping}
+          headers={fieldMappingDialog.headers}
+          autoMapping={fieldMappingDialog.autoMapping}
+          sampleData={fieldMappingDialog.sampleData}
+        />
+      </div>
+    );
+  }

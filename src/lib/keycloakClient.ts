@@ -229,38 +229,70 @@ export class KeycloakClient {
       },
     };
 
-    try {
-      const response = await fetch(url, requestOptions);
-      
-      // If token expired, try to refresh and retry
-      if (response.status === 401) {
-        if (process.env.NODE_ENV === 'development') {
-          console.log('Token expired, attempting refresh...');
+    const attemptFetch = async (isRetry: boolean = false): Promise<Response> => {
+      try {
+        const response = await fetch(url, requestOptions);
+        
+        // If token expired, try to refresh and retry
+        if (response.status === 401) {
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Token expired, attempting refresh...');
+          }
+          
+          const refreshed = await this.refreshAccessToken();
+          if (refreshed) {
+            // Retry with new token
+            const newRequestOptions = {
+              ...requestOptions,
+              headers: {
+                ...requestOptions.headers,
+                'Authorization': `Bearer ${this.accessToken}`,
+              },
+            };
+            return fetch(url, newRequestOptions);
+          } else {
+            throw new Error('Authentication expired and refresh failed');
+          }
+        }
+
+        return response;
+      } catch (error) {
+        // If this is a network error and we haven't already retried, try to refresh token and retry
+        if (!isRetry && error instanceof TypeError && error.message.includes('Failed to fetch')) {
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Network error detected, attempting token refresh and retry...');
+          }
+          
+          try {
+            const refreshed = await this.refreshAccessToken();
+            if (refreshed) {
+              // Update the request options with new token
+              const newRequestOptions = {
+                ...requestOptions,
+                headers: {
+                  ...requestOptions.headers,
+                  'Authorization': `Bearer ${this.accessToken}`,
+                },
+              };
+              
+              // Retry the request with fresh token
+              return attemptFetch(true);
+            }
+          } catch (refreshError) {
+            if (process.env.NODE_ENV === 'development') {
+              console.error('Token refresh failed during retry:', refreshError);
+            }
+          }
         }
         
-        const refreshed = await this.refreshAccessToken();
-        if (refreshed) {
-          // Retry with new token
-          const newRequestOptions = {
-            ...requestOptions,
-            headers: {
-              ...requestOptions.headers,
-              'Authorization': `Bearer ${this.accessToken}`,
-            },
-          };
-          return fetch(url, newRequestOptions);
-        } else {
-          throw new Error('Authentication expired and refresh failed');
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Authenticated fetch error:', error);
         }
+        throw error;
       }
+    };
 
-      return response;
-    } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
-        console.error('Authenticated fetch error:', error);
-      }
-      throw error;
-    }
+    return attemptFetch();
   }
 
   /**
@@ -532,39 +564,61 @@ export class KeycloakClient {
       });
 
       // Add required NRW-specific attributes
-      if (!dryRun) {
-        try {
-          const currentUserProfile = await this.getCurrentUserProfile();
-          
-          // Add standard attributes
-          userPayload.attributes.rolle = ["LEHR"];
-          
-          // Extract all relevant information from current user's profile
-          if (currentUserProfile.bundesland) {
-            userPayload.attributes.bundesland = [currentUserProfile.bundesland];
-          }
-          if (currentUserProfile.schulnummer) {
-            userPayload.attributes.schulnummer = [currentUserProfile.schulnummer];
-          }
-          if (currentUserProfile.schulleiter) {
-            userPayload.attributes.schulleiter = [currentUserProfile.schulleiter];
-          }
-          
-          if (process.env.NODE_ENV === 'development') {
-            console.log('Added user attributes:', {
-              rolle: userPayload.attributes.rolle,
-              bundesland: userPayload.attributes.bundesland,
-              schulnummer: userPayload.attributes.schulnummer,
-              schulleiter: userPayload.attributes.schulleiter
-            });
-          }
-        } catch (error) {
-          if (process.env.NODE_ENV === 'development') {
-            console.warn('Could not fetch current user profile for school attributes:', error);
-          }
-          // Continue with minimal attributes if profile fetch fails
-          userPayload.attributes.rolle = ["LEHR"];
+      // Always add these attributes, even in dry run mode for proper testing
+      try {
+        const currentUserProfile = await this.getCurrentUserProfile();
+        
+        // Add standard attributes
+        userPayload.attributes.rolle = ["LEHR"];
+        
+        // Extract all relevant information from current user's profile
+        // Handle both flattened format and nested format
+        const getBundesland = () => {
+          return currentUserProfile.bundesland || 
+                 currentUserProfile.attributes?.bundesland?.[0] || 
+                 currentUserProfile.attributes?.bundesland;
+        };
+        
+        const getSchulnummer = () => {
+          return currentUserProfile.schulnummer || 
+                 currentUserProfile.attributes?.schulnummer?.[0] || 
+                 currentUserProfile.attributes?.schulnummer;
+        };
+        
+        const getSchulleiter = () => {
+          return currentUserProfile.schulleiter || 
+                 currentUserProfile.attributes?.schulleiter?.[0] || 
+                 currentUserProfile.attributes?.schulleiter;
+        };
+        
+        const bundesland = getBundesland();
+        const schulnummer = getSchulnummer();
+        const schulleiter = getSchulleiter();
+        
+        if (bundesland) {
+          userPayload.attributes.bundesland = [bundesland];
         }
+        if (schulnummer) {
+          userPayload.attributes.schulnummer = [schulnummer];
+        }
+        if (schulleiter) {
+          userPayload.attributes.schulleiter = [schulleiter];
+        }
+        
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Added user attributes:', {
+            rolle: userPayload.attributes.rolle,
+            bundesland: userPayload.attributes.bundesland,
+            schulnummer: userPayload.attributes.schulnummer,
+            schulleiter: userPayload.attributes.schulleiter
+          });
+        }
+      } catch (error) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Could not fetch current user profile for school attributes:', error);
+        }
+        // Continue with minimal attributes if profile fetch fails
+        userPayload.attributes.rolle = ["LEHR"];
       }
 
       if (dryRun) {
@@ -637,13 +691,33 @@ export class KeycloakClient {
     }
 
     try {
-      const response = await fetch(`${this.config.url}/admin/realms/${this.config.realm}/users?max=1000`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${this.accessToken}`,
-          'Content-Type': 'application/json',
-        },
+      // Get current user's school ID for filtering
+      let currentUserSchoolId: string | null = null;
+      let currentUserId: string | null = null;
+      
+      try {
+        const currentUserProfile = await this.getCurrentUserProfile();
+        currentUserSchoolId = currentUserProfile.schulnummer || 
+                             currentUserProfile.attributes?.schulnummer?.[0] || 
+                             currentUserProfile.attributes?.schulnummer;
+        currentUserId = currentUserProfile.sub || currentUserProfile.id;
+      } catch (error) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Could not fetch current user profile for school filtering:', error);
+        }
+      }
+      
+      // Build query parameters for API-level filtering
+      const queryParams = new URLSearchParams({
+        max: '1000'
       });
+      
+      // Add school-based filtering if available
+      if (currentUserSchoolId) {
+        queryParams.append('q', `schulnummer:${currentUserSchoolId}`);
+      }
+      
+      const response = await this.authenticatedFetch(`${this.config.url}/admin/realms/${this.config.realm}/users?${queryParams}`);
 
       if (!response.ok) {
         throw new Error(`Failed to fetch users: ${response.statusText}`);
@@ -651,8 +725,16 @@ export class KeycloakClient {
 
       const keycloakUsers = await response.json();
       
+      // Only need to filter out current user (school filtering is done at API level)
+      let filteredUsers = keycloakUsers;
+      
+      // Filter out current user
+      if (currentUserId) {
+        filteredUsers = filteredUsers.filter((kUser: any) => kUser.id !== currentUserId);
+      }
+      
       // Convert Keycloak user format to our User interface
-      return keycloakUsers.map((kUser: any) => ({
+      return filteredUsers.map((kUser: any) => ({
         id: kUser.id,
         firstName: kUser.firstName || '',
         lastName: kUser.lastName || '',

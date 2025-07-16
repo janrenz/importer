@@ -8,9 +8,10 @@ import { KeycloakConfig } from '@/types';
 interface LogoutButtonProps {
   keycloakConfig: KeycloakConfig;
   onLogout?: () => void;
+  isAuthenticated?: boolean;
 }
 
-export default function LogoutButton({ keycloakConfig, onLogout }: LogoutButtonProps) {
+export default function LogoutButton({ keycloakConfig, onLogout, isAuthenticated = false }: LogoutButtonProps) {
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -69,6 +70,11 @@ export default function LogoutButton({ keycloakConfig, onLogout }: LogoutButtonP
     if (!mounted) return null;
     return createPortal(content, document.body);
   };
+
+  // Only show logout button if authenticated
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <>

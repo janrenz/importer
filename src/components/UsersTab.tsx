@@ -32,7 +32,6 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [emailFilter, setEmailFilter] = useState<'all' | 'verified' | 'unverified'>('all');
 
 
@@ -45,18 +44,36 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
     try {
       const client = new KeycloakClient(keycloakConfig);
       
-      // Build query parameters including filters
+      // Get current user profile for filtering
+      let currentUserId: string | null = null;
+      let currentUserSchoolId: string | null = null;
+      try {
+        const currentUserProfile = await client.getCurrentUserProfile();
+        currentUserId = currentUserProfile.sub || currentUserProfile.id;
+        currentUserSchoolId = currentUserProfile.schulnummer || 
+                             currentUserProfile.attributes?.schulnummer?.[0] || 
+                             currentUserProfile.attributes?.schulnummer;
+      } catch (error) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Could not fetch current user profile for filtering:', error);
+        }
+      }
+      
+      // Build query parameters for API-level filtering
       const params = new URLSearchParams({
         first: ((page - 1) * USERS_PER_PAGE).toString(),
         max: USERS_PER_PAGE.toString(),
-        ...(search && { search }),
       });
-
-      // Add server-side filters
-      if (statusFilter === 'active') params.append('enabled', 'true');
-      if (statusFilter === 'inactive') params.append('enabled', 'false');
-      // Note: emailVerified filter might not be supported by Keycloak Admin API
-      // We'll handle this client-side instead
+      
+      // Add search filter if provided
+      if (search) {
+        params.append('search', search);
+      }
+      
+      // Add school-based filtering if available
+      if (currentUserSchoolId) {
+        params.append('q', `schulnummer:${currentUserSchoolId}`);
+      }
 
       const response = await client.authenticatedFetch(
         `${keycloakConfig.url}/admin/realms/${keycloakConfig.realm}/users?${params}`
@@ -68,27 +85,22 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
 
       const usersData = await response.json();
       
-      // Get current user profile to exclude from list
-      let currentUserId: string | null = null;
-      try {
-        const currentUserProfile = await client.getCurrentUserProfile();
-        currentUserId = currentUserProfile.sub || currentUserProfile.id;
-      } catch (error) {
-        if (process.env.NODE_ENV === 'development') {
-          console.warn('Could not fetch current user profile to exclude from list:', error);
-        }
+      // Only need to filter out current user (school filtering is done at API level)
+      let filteredUsersData = usersData;
+      
+      // Filter out current user
+      if (currentUserId) {
+        filteredUsersData = filteredUsersData.filter((user: KeycloakUser) => user.id !== currentUserId);
       }
       
-      // Filter out the current user from the list
-      const filteredUsersData = currentUserId 
-        ? usersData.filter((user: KeycloakUser) => user.id !== currentUserId)
-        : usersData;
-      
       // Get total count for pagination with same filters
-      const countParams = new URLSearchParams(search ? { search } : {});
-      if (statusFilter === 'active') countParams.append('enabled', 'true');
-      if (statusFilter === 'inactive') countParams.append('enabled', 'false');
-      // EmailVerified filter not included in count as it's handled client-side
+      const countParams = new URLSearchParams();
+      if (search) {
+        countParams.append('search', search);
+      }
+      if (currentUserSchoolId) {
+        countParams.append('q', `schulnummer:${currentUserSchoolId}`);
+      }
 
       const countResponse = await client.authenticatedFetch(
         `${keycloakConfig.url}/admin/realms/${keycloakConfig.realm}/users/count?${countParams}`
@@ -104,7 +116,7 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
     } finally {
       setLoading(false);
     }
-  }, [keycloakConfig, isKeycloakAuthenticated, statusFilter, emailFilter]);
+  }, [keycloakConfig, isKeycloakAuthenticated, emailFilter]);
 
   useEffect(() => {
     loadUsers(1, searchTerm);
@@ -117,12 +129,6 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
 
   const handlePageChange = (page: number) => {
     loadUsers(page, searchTerm);
-  };
-
-  const handleStatusFilterChange = (newFilter: 'all' | 'active' | 'inactive') => {
-    setStatusFilter(newFilter);
-    setCurrentPage(1); // Reset to first page
-    loadUsers(1, searchTerm);
   };
 
   const handleEmailFilterChange = (newFilter: 'all' | 'verified' | 'unverified') => {
@@ -269,7 +275,7 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
                 Keycloak Benutzer
               </h2>
               <p className="text-sm text-orange-600 dark:text-orange-400">
-                {totalUsers} Benutzer gesamt
+                {totalUsers} Benutzer für Ihre Schule
               </p>
             </div>
           </div>
@@ -316,21 +322,6 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
             <span className="text-sm font-medium text-orange-700 dark:text-orange-300">Filter:</span>
           </div>
 
-          {/* Status Filter */}
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-orange-700 dark:text-orange-300">
-              Status:
-            </label>
-            <select
-              value={statusFilter}
-              onChange={(e) => handleStatusFilterChange(e.target.value as 'all' | 'active' | 'inactive')}
-              className="px-3 py-2 text-sm border border-orange-200 dark:border-orange-700 rounded-lg bg-white dark:bg-stone-800 text-orange-900 dark:text-orange-100 focus:outline-none focus:ring-2 focus:ring-orange-500"
-            >
-              <option value="all">Alle Status</option>
-              <option value="active">Aktiv</option>
-              <option value="inactive">Inaktiv</option>
-            </select>
-          </div>
 
           {/* Email Verification Filter */}
           <div className="flex items-center gap-2">
@@ -581,9 +572,9 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
               Keine Benutzer gefunden
             </h3>
             <p className="text-sm text-orange-600 dark:text-orange-400">
-              {searchTerm || statusFilter !== 'all' || emailFilter !== 'all' 
+              {searchTerm || emailFilter !== 'all' 
                 ? 'Keine Benutzer entsprechen den aktuellen Filtern.' 
-                : 'Es sind keine Benutzer in Keycloak vorhanden.'}
+                : 'Es sind keine Benutzer für Ihre Schule in Keycloak vorhanden.'}
             </p>
           </div>
         )}

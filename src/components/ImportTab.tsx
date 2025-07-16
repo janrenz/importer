@@ -13,7 +13,7 @@ const AVAILABLE_ATTRIBUTES: SyncableAttribute[] = [
   { key: 'lastName', label: 'Last Name', required: true },
   { key: 'email', label: 'Email Address', required: true },
   { key: 'userType', label: 'User Type (Student/Teacher)', required: true },
-  { key: 'schildId', label: 'SchILD ID', required: false },
+  { key: 'schildId', label: 'SchILD ID', required: true },
   { key: 'klasse', label: 'Class Assignment', required: false },
 ];
 

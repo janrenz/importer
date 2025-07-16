@@ -1,4 +1,5 @@
 interface CSVUser {
+  id?: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -6,6 +7,7 @@ interface CSVUser {
 }
 
 interface FieldMapping {
+  id: string[];
   firstName: string[];
   lastName: string[];
   email: string[];
@@ -14,6 +16,12 @@ interface FieldMapping {
 
 // Intelligent field mapping based on common header names
 const FIELD_MAPPINGS: FieldMapping = {
+  id: [
+    'id', 'user_id', 'userid', 'benutzerid', 'benutzer_id', 'nutzerid', 'nutzer_id',
+    'identifier', 'identifikator', 'personalnummer', 'personal_nummer', 'personal_number',
+    'mitarbeiternummer', 'mitarbeiter_nummer', 'employee_id', 'employee_number',
+    'lehrerid', 'lehrer_id', 'teacher_id', 'teacher_number', 'schild_id', 'schildid'
+  ],
   firstName: [
     'firstname', 'first_name', 'first name', 'vorname', 'givenname', 'given_name', 'given name',
     'prename', 'vname', 'fn', 'given', 'christian_name', 'rufname'
@@ -46,6 +54,66 @@ const STUDENT_KEYWORDS = [
 
 function normalizeFieldName(fieldName: string): string {
   return fieldName.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+}
+
+/**
+ * Generates a simple hash from a string using djb2 algorithm
+ */
+function simpleHash(str: string): number {
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) + hash) + str.charCodeAt(i);
+  }
+  return Math.abs(hash);
+}
+
+/**
+ * Checks if a string contains exactly 11 digits (for teacher IDs)
+ */
+function containsElevenDigits(str: string): boolean {
+  if (!str) return false;
+  const digits = str.replace(/[^0-9]/g, '');
+  return digits.length === 11;
+}
+
+/**
+ * Converts an 11-digit ID to the standard format ID-123456-78901
+ */
+function formatElevenDigitId(str: string): string {
+  const digits = str.replace(/[^0-9]/g, '');
+  if (digits.length === 11) {
+    return `ID-${digits.slice(0, 6)}-${digits.slice(6, 11)}`;
+  }
+  return str;
+}
+
+/**
+ * Generates a user ID in the format ID-123456-3524 from an email address
+ * The 11 digits are derived from a hash of the email
+ */
+export function generateUserIdFromEmail(email: string): string {
+  if (!email) {
+    // Fallback for missing email
+    return `ID-${Date.now().toString().slice(-11)}`;
+  }
+  
+  // Generate hash from email
+  const hash = simpleHash(email.toLowerCase());
+  
+  // Convert to string and pad to ensure we have enough digits
+  const hashStr = hash.toString();
+  
+  // Take first 11 digits, pad with zeros if needed
+  let digits = hashStr.slice(0, 11);
+  if (digits.length < 11) {
+    digits = digits.padStart(11, '0');
+  }
+  
+  // Format as ID-XXXXXX-XXXX (6 digits, dash, 4 digits)
+  const firstPart = digits.slice(0, 6);
+  const secondPart = digits.slice(6, 11);
+  
+  return `ID-${firstPart}-${secondPart}`;
 }
 
 function findBestMatch(headerName: string, possibleMatches: string[]): boolean {
@@ -84,7 +152,9 @@ function mapCSVHeaders(headers: string[]): Record<string, number> {
     const cleanHeader = header.trim();
     
     // Check in order of specificity to avoid conflicts
-    if (findBestMatch(cleanHeader, FIELD_MAPPINGS.firstName) && !mapping.firstName) {
+    if (findBestMatch(cleanHeader, FIELD_MAPPINGS.id) && !mapping.id) {
+      mapping.id = index;
+    } else if (findBestMatch(cleanHeader, FIELD_MAPPINGS.firstName) && !mapping.firstName) {
       mapping.firstName = index;
     } else if (findBestMatch(cleanHeader, FIELD_MAPPINGS.lastName) && !mapping.lastName) {
       mapping.lastName = index;
@@ -181,6 +251,7 @@ export function parseCSVFile(csvContent: string): {
       continue; // Skip empty rows
     }
     
+    const idValue = mapping.id !== undefined ? (row[mapping.id] || '').trim() : '';
     const firstName = mapping.firstName !== undefined ? (row[mapping.firstName] || '').trim() : '';
     const lastName = mapping.lastName !== undefined ? (row[mapping.lastName] || '').trim() : '';
     const email = mapping.email !== undefined ? (row[mapping.email] || '').trim() : '';
@@ -201,6 +272,14 @@ export function parseCSVFile(csvContent: string): {
       }
     }
     
+    // Process ID - if it contains 11 digits, format it properly
+    let processedId: string | undefined;
+    if (idValue && containsElevenDigits(idValue)) {
+      processedId = formatElevenDigitId(idValue);
+    } else if (idValue) {
+      processedId = idValue;
+    }
+    
     // Create user object
     const user: CSVUser = {
       firstName: firstName || '',
@@ -208,6 +287,11 @@ export function parseCSVFile(csvContent: string): {
       email: email || '',
       userType
     };
+    
+    // Only add ID if it was found in CSV
+    if (processedId) {
+      user.id = processedId;
+    }
     
     users.push(user);
   }
@@ -259,6 +343,7 @@ export function processCSVWithMapping(
       continue; // Skip empty rows
     }
     
+    const idValue = customMapping.id !== undefined ? (row[customMapping.id] || '').trim() : '';
     const firstName = customMapping.firstName !== undefined ? (row[customMapping.firstName] || '').trim() : '';
     const lastName = customMapping.lastName !== undefined ? (row[customMapping.lastName] || '').trim() : '';
     const email = customMapping.email !== undefined ? (row[customMapping.email] || '').trim() : '';
@@ -279,6 +364,14 @@ export function processCSVWithMapping(
       }
     }
     
+    // Process ID - if it contains 11 digits, format it properly
+    let processedId: string | undefined;
+    if (idValue && containsElevenDigits(idValue)) {
+      processedId = formatElevenDigitId(idValue);
+    } else if (idValue) {
+      processedId = idValue;
+    }
+    
     // Create user object
     const user: CSVUser = {
       firstName: firstName || '',
@@ -286,6 +379,11 @@ export function processCSVWithMapping(
       email: email || '',
       userType
     };
+    
+    // Only add ID if it was found in CSV
+    if (processedId) {
+      user.id = processedId;
+    }
     
     users.push(user);
   }
