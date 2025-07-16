@@ -858,4 +858,38 @@ export class KeycloakClient {
       return false;
     }
   }
+
+  async resetUserPassword(userId: string, dryRun: boolean = false): Promise<boolean> {
+    if (dryRun) {
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 100 + Math.random() * 200));
+      console.log('DRY RUN - Would send password reset email to user:', userId);
+      return true;
+    }
+
+    if (!this.accessToken) {
+      throw new Error('Not authenticated');
+    }
+
+    try {
+      const response = await this.authenticatedFetch(`${this.config.url}/admin/realms/${this.config.realm}/users/${userId}/execute-actions-email`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(['UPDATE_PASSWORD']),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to send password reset email: ${response.statusText}`);
+      }
+
+      return true;
+    } catch (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error sending password reset email:', error);
+      }
+      return false;
+    }
+  }
 }

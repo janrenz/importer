@@ -555,7 +555,7 @@ export default function HomePage() {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-                  SchILD Sync
+                  NRW telli Nutzerverwaltung für Schulleitungen
                 </h1>
                 <p className="text-sm text-slate-600 dark:text-slate-400">
                   {userProfile?.schulnummer ? `Schule: ${userProfile.schulnummer}` : 

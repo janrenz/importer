@@ -155,7 +155,7 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
     }
   };
 
-  const handleBulkAction = async (action: 'activate' | 'deactivate' | 'delete') => {
+  const handleBulkAction = async (action: 'activate' | 'deactivate' | 'delete' | 'reset-password') => {
     if (selectedUsers.size === 0) return;
     
     // Security confirmation dialogs
@@ -174,6 +174,10 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
       case 'activate':
         confirmTitle = 'Benutzer aktivieren';
         confirmMessage = `Sind Sie sicher, dass Sie ${selectedUsers.size} Benutzer aktivieren möchten?`;
+        break;
+      case 'reset-password':
+        confirmTitle = 'Passwort zurücksetzen';
+        confirmMessage = `Sind Sie sicher, dass Sie ${selectedUsers.size} Benutzern eine Passwort-Zurücksetzen-E-Mail senden möchten?\n\nDie Benutzer erhalten eine E-Mail mit einem Link zum Zurücksetzen ihres Passworts.`;
         break;
     }
     
@@ -201,6 +205,9 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
               break;
             case 'delete':
               await client.deleteUser(userId);
+              break;
+            case 'reset-password':
+              await client.resetUserPassword(userId);
               break;
           }
         } catch (err) {
@@ -384,6 +391,20 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
                   </svg>
                 )}
                 Deaktivieren
+              </button>
+              <button
+                onClick={() => handleBulkAction('reset-password')}
+                disabled={bulkActionLoading}
+                className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 border border-blue-600 hover:border-blue-700 rounded-lg transition-colors"
+              >
+                {bulkActionLoading ? (
+                  <div className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m0 0a2 2 0 012 2v6a2 2 0 01-2 2H7a2 2 0 01-2-2V9a2 2 0 012-2m0 0V7a2 2 0 012-2m6 0V5a2 2 0 00-2-2H9a2 2 0 00-2 2v2m0 0h10" />
+                  </svg>
+                )}
+                Passwort zurücksetzen
               </button>
               <button
                 onClick={() => handleBulkAction('delete')}
