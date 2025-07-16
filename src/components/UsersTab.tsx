@@ -21,6 +21,7 @@ interface KeycloakUser {
 interface UsersTabProps {
   keycloakConfig: KeycloakConfig;
   isKeycloakAuthenticated: boolean;
+  onUserCountUpdate?: (count: number) => void;
 }
 
 interface UserProfile {
@@ -34,7 +35,7 @@ interface UserProfile {
 
 const USERS_PER_PAGE = 20;
 
-export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: UsersTabProps) {
+export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated, onUserCountUpdate }: UsersTabProps) {
   const [users, setUsers] = useState<KeycloakUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -111,6 +112,9 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated }: Us
       setUsers(filteredUsersData);
       setTotalUsers(count);
       setCurrentPage(page);
+      
+      // Update parent component with user count
+      onUserCountUpdate?.(count);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load users');
     } finally {

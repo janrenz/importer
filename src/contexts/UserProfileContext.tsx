@@ -75,11 +75,51 @@ export function UserProfileProvider({ children, keycloakConfig, isAuthenticated 
     refreshProfile();
   }, [isAuthenticated, keycloakConfig.url, keycloakConfig.realm]);
 
+  // Set up periodic token refresh check
+  useEffect(() => {
+    if (!isAuthenticated) {
+      return;
+    }
+
+    const checkTokenExpiry = async () => {
+      try {
+        const client = new KeycloakClient(keycloakConfig);
+        // Only check if token is valid, don't clear profile immediately
+        const isValid = await client.ensureValidToken();
+        if (!isValid) {
+          // Token refresh failed, user needs to re-authenticate
+          setError('Session expired. Please log in again.');
+          setUserProfile(null);
+        }
+      } catch (error) {
+        console.error('Token refresh check failed:', error);
+        // Don't clear profile on network errors, only on auth failures
+        if (error instanceof Error && error.message.includes('Authentication expired')) {
+          setError('Session expired. Please log in again.');
+          setUserProfile(null);
+        }
+      }
+    };
+
+    // Check token every 10 minutes (increased from 5 to be less aggressive)
+    const interval = setInterval(checkTokenExpiry, 10 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, [isAuthenticated, keycloakConfig]);
+
   const schulnummer = userProfile?.schulnummer || 
                      (Array.isArray(userProfile?.attributes?.schulnummer) 
                        ? userProfile?.attributes?.schulnummer[0] 
                        : userProfile?.attributes?.schulnummer) || 
                      null;
+
+  // Debug logging
+  if (process.env.NODE_ENV === 'development' && userProfile) {
+    console.log('UserProfile full data:', userProfile);
+    console.log('Extracted schulnummer:', schulnummer);
+    console.log('Direct schulnummer:', userProfile.schulnummer);
+    console.log('Attributes schulnummer:', userProfile.attributes?.schulnummer);
+  }
 
   const userId = userProfile?.sub || userProfile?.id || null;
 

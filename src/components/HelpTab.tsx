@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-type HelpTopic = 'support' | 'password-reset' | 'account-confirmation' | 'vidis-activation' | 'user-management' | 'getting-started' | 'troubleshooting';
+type HelpTopic = 'support' | 'password-reset' | 'account-confirmation' | 'vidis-activation' | 'user-management' | 'getting-started' | 'troubleshooting' | 'teacher-account-help';
 
 interface HelpTopicData {
   id: HelpTopic;
@@ -322,7 +322,7 @@ const helpTopics: HelpTopicData[] = [
           <div className="card p-4 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800">
             <h4 className="font-medium text-amber-900 dark:text-amber-100 mb-2">Bestätigungslink funktioniert nicht?</h4>
             <div className="text-sm text-amber-700 dark:text-amber-300 space-y-2">
-              <p>• Der Link ist möglicherweise abgelaufen (24 Stunden gültig)</p>
+              <p>• Der Link ist möglicherweise abgelaufen</p>
               <p>• Kopieren Sie den Link vollständig in die Adressleiste</p>
               <p>• Versuchen Sie einen anderen Browser</p>
               <p>• Kontaktieren Sie den Support für weitere Hilfe</p>
@@ -660,10 +660,10 @@ const helpTopics: HelpTopicData[] = [
           <div className="text-sm text-purple-700 dark:text-purple-300 space-y-2">
             <p><strong>Unterstützte Browser:</strong></p>
             <ul className="ml-4 space-y-1">
-              <li>• Chrome 90+ (empfohlen)</li>
-              <li>• Firefox 90+</li>
-              <li>• Safari 14+</li>
-              <li>• Edge 90+</li>
+              <li>• Chrome</li>
+              <li>• Firefox</li>
+              <li>• Safari</li>
+              <li>• Edge</li>
             </ul>
             <p className="mt-2">Bitte verwenden Sie immer die neueste Version Ihres Browsers.</p>
           </div>
@@ -729,7 +729,7 @@ export default function HelpTab() {
           <div className="card p-6">
             <div className="flex items-center space-x-3 mb-6">
               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
-                <span className="text-blue-600">
+                <span className="text-white">
                   {currentTopic?.icon}
                 </span>
               </div>

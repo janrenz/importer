@@ -115,7 +115,8 @@ TESTMODUS
                     : 'text-amber-700 dark:text-amber-300'
                 }`}>
                   {failed === 0 
-                    ? (isDryRun ? 'Testlauf erfolgreich abgeschlossen!' : 'Alle Benutzer erfolgreich synchronisiert!')
+                    ? (isDryRun ? 'Testlauf erfolgreich abgeschlossen!' : 
+                       `Alle Benutzer erfolgreich synchronisiert! ${created > 0 ? `${created} neue Benutzer wurden erstellt und erhalten eine E-Mail zur Kontoverifizierung und Passwort-Einrichtung.` : ''}`)
                     : (isDryRun ? `Testlauf mit ${failed} simulierten Fehlern abgeschlossen` : `Synchronisation mit ${failed} Fehlern abgeschlossen`)
                   }
                 </p>

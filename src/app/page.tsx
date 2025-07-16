@@ -34,12 +34,17 @@ function AppContent({
   const [users, setUsers] = useState<User[]>([]);
   const [activeTab, setActiveTab] = useState<TabType>('start');
   const [isLoginLoading, setIsLoginLoading] = useState(false);
+  const [totalKeycloakUsers, setTotalKeycloakUsers] = useState<number>(0);
   
   // Use the context instead of fetching user profile directly
   const { userProfile, error: profileError, schulnummer, refreshProfile } = useUserProfile();
 
   const handleUsersLoaded = useCallback((loadedUsers: User[]) => {
     setUsers(loadedUsers);
+  }, []);
+
+  const handleUserCountUpdate = useCallback((count: number) => {
+    setTotalKeycloakUsers(count);
   }, []);
 
   const [callbackPending, setCallbackPending] = useState(false);
@@ -173,7 +178,7 @@ function AppContent({
     },
     {
       id: 'users' as TabType,
-      label: 'Nutzer verwalten',
+      label: `Nutzer verwalten${totalKeycloakUsers > 0 ? ` (${totalKeycloakUsers})` : ''}`,
       icon: (
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
@@ -344,6 +349,35 @@ function AppContent({
               </div>
             </div>
 
+            {/* VIDIS Portal Teaser */}
+            <div className="max-w-4xl mx-auto">
+              <div className="card p-6 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800">
+                <div className="flex items-start space-x-4">
+                  <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center flex-shrink-0">
+                    <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2">
+                      Wichtiger Hinweis
+                    </h3>
+                    <p className="text-blue-700 dark:text-blue-300 leading-relaxed">
+                      Denken Sie daran, telli im VIDIS Portal unter{' '}
+                      <a 
+                        href="https://service.vidis.schule" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline decoration-blue-300 hover:decoration-blue-500 transition-colors"
+                      >
+                        https://service.vidis.schule
+                      </a>
+                      {' '}freizuschalten.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
 
             {/* Features Overview */}
             <div className="grid md:grid-cols-2 gap-6">
@@ -454,6 +488,7 @@ function AppContent({
           <UsersTab
             keycloakConfig={keycloakConfig}
             isKeycloakAuthenticated={isKeycloakAuthenticated}
+            onUserCountUpdate={handleUserCountUpdate}
           />
         );
       case 'help':
@@ -625,11 +660,11 @@ function AppContent({
           </div>
 
           {/* XML Loader - Only for Delete tab */}
-          {activeTab === 'delete' && (
+          {/* {activeTab === 'delete' && (
             <div className="p-4 sm:p-6 lg:p-8 border-b border-slate-200 dark:border-slate-700">
               <FileUpload onUsersLoaded={handleUsersLoaded} hasLoadedUsers={users.length > 0} />
             </div>
-          )}
+          )} */}
 
           {/* Tab Content */}
           <div className="flex-1 p-4 sm:p-6 lg:p-8">

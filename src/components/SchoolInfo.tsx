@@ -8,8 +8,24 @@ interface SchoolInfoProps {
 }
 
 export default function SchoolInfo({ schulnummer, className = '' }: SchoolInfoProps) {
+  // Debug logging
+  if (process.env.NODE_ENV === 'development') {
+    console.log('SchoolInfo received schulnummer:', schulnummer, 'type:', typeof schulnummer);
+  }
+  
   if (!schulnummer) {
-    return null;
+    return (
+      <div className={`flex items-center space-x-2 ${className}`}>
+        <div className="flex items-center space-x-2 px-3 py-1 bg-yellow-100 dark:bg-yellow-900 rounded-lg">
+          <svg className="w-4 h-4 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.98-.833-2.75 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+          </svg>
+          <span className="text-sm font-medium text-yellow-700 dark:text-yellow-300">
+            Schulnummer nicht verfügbar
+          </span>
+        </div>
+      </div>
+    );
   }
 
   const schoolInfo = findSchoolByNumber(schulnummer);

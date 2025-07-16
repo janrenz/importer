@@ -145,12 +145,12 @@ export default function FileUpload({ onUsersLoaded, hasLoadedUsers = false }: Fi
               )}
             </div>
             <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-3">
-              {isProcessing ? 'Datei wird verarbeitet...' : 'XML-Datei hochladen'}
+              {isProcessing ? 'Datei wird verarbeitet...' : 'SchiLD Export (XML) hochladen'}
             </h3>
             <p className="text-slate-600 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
               {isProcessing 
                 ? 'Bitte warten Sie, während wir Ihre XML-Datei verarbeiten'
-                : 'Wählen Sie Ihre SchILD XML-Export-Datei aus, um Benutzerdaten zu importieren und mit Keycloak zu synchronisieren'
+                : 'Wählen Sie Ihre SchILD XML-Export-Datei aus, um Benutzerdaten zu importieren und mit Keycloak zu synchronisieren. Informationen zum Erstellen der Datei finden Sie im Hilfebereich.'
               }
             </p>
           </div>

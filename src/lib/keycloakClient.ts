@@ -122,6 +122,12 @@ export class KeycloakClient {
         sessionStorage.setItem('oauth2_refresh_token', tokenResponse.refresh_token);
       }
       
+      // Store token expiration time
+      if (tokenResponse.expires_in) {
+        const expiryTime = Date.now() + (tokenResponse.expires_in * 1000) - 30000; // Subtract 30 seconds for buffer
+        sessionStorage.setItem('oauth2_token_expiry', expiryTime.toString());
+      }
+      
       // Clean up session storage
       sessionStorage.removeItem('oauth2_code');
       sessionStorage.removeItem('oauth2_state');
@@ -141,6 +147,7 @@ export class KeycloakClient {
       sessionStorage.removeItem('oauth2_state');
       sessionStorage.removeItem('oauth2_code_verifier');
       sessionStorage.removeItem('oauth2_access_token');
+      sessionStorage.removeItem('oauth2_token_expiry');
       
       return false;
     } finally {
@@ -153,7 +160,53 @@ export class KeycloakClient {
    * Checks if user is currently authenticated
    */
   isAuthenticated(): boolean {
-    return this.accessToken !== null;
+    if (!this.accessToken) {
+      return false;
+    }
+    
+    // Check if token is expired
+    if (this.isTokenExpired()) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Token expired during authentication check');
+      }
+      // Don't clear the token here, let the caller handle it
+      return false;
+    }
+    
+    return true;
+  }
+
+  /**
+   * Checks if the current token is expired or about to expire
+   */
+  private isTokenExpired(): boolean {
+    const expiryTime = sessionStorage.getItem('oauth2_token_expiry');
+    if (!expiryTime) {
+      return false; // If no expiry time stored, assume token is valid
+    }
+    
+    const expired = Date.now() >= parseInt(expiryTime);
+    
+    if (process.env.NODE_ENV === 'development' && expired) {
+      console.log('Token expired:', new Date(parseInt(expiryTime)).toISOString());
+    }
+    
+    return expired;
+  }
+
+  /**
+   * Checks if token needs refresh and refreshes it if necessary
+   */
+  async ensureValidToken(): Promise<boolean> {
+    if (!this.accessToken) {
+      return false;
+    }
+
+    if (this.isTokenExpired()) {
+      return await this.refreshAccessToken();
+    }
+
+    return true;
   }
 
   /**
@@ -198,6 +251,12 @@ export class KeycloakClient {
       if (tokenResponse.refresh_token) {
         sessionStorage.setItem('oauth2_refresh_token', tokenResponse.refresh_token);
       }
+      
+      // Update token expiration time
+      if (tokenResponse.expires_in) {
+        const expiryTime = Date.now() + (tokenResponse.expires_in * 1000) - 30000; // Subtract 30 seconds for buffer
+        sessionStorage.setItem('oauth2_token_expiry', expiryTime.toString());
+      }
 
       if (process.env.NODE_ENV === 'development') {
         console.log('Token refreshed successfully');
@@ -218,6 +277,18 @@ export class KeycloakClient {
   async authenticatedFetch(url: string, options: RequestInit = {}): Promise<Response> {
     if (!this.accessToken) {
       throw new Error('Not authenticated');
+    }
+
+    // Check if token is expired or about to expire and refresh if needed
+    if (this.isTokenExpired()) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Token expired, refreshing before request...');
+      }
+      
+      const refreshed = await this.refreshAccessToken();
+      if (!refreshed) {
+        throw new Error('Authentication expired and refresh failed');
+      }
     }
 
     const requestOptions = {
@@ -369,6 +440,91 @@ export class KeycloakClient {
   }
 
   /**
+   * Gets a user by email address
+   */
+  async getUserByEmail(email: string): Promise<any> {
+    if (!this.accessToken) {
+      throw new Error('Not authenticated');
+    }
+
+    const response = await fetch(
+      `${this.config.url}/admin/realms/${this.config.realm}/users?email=${encodeURIComponent(email)}`,
+      {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${this.accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to get user (${response.status}): ${response.statusText}`);
+    }
+
+    const users = await response.json();
+    return users.length > 0 ? users[0] : null;
+  }
+
+  /**
+   * Sends verification email to a user
+   */
+  async sendVerificationEmail(userId: string): Promise<void> {
+    if (!this.accessToken) {
+      throw new Error('Not authenticated');
+    }
+
+    const response = await fetch(
+      `${this.config.url}/admin/realms/${this.config.realm}/users/${userId}/send-verify-email`,
+      {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${this.accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          // Optional: customize email parameters
+          // client_id: this.config.clientId,
+          // redirect_uri: 'your-redirect-uri'
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to send verification email (${response.status}): ${errorText}`);
+    }
+  }
+
+  /**
+   * Sends password reset email to a user
+   */
+  async sendPasswordResetEmail(userId: string): Promise<void> {
+    if (!this.accessToken) {
+      throw new Error('Not authenticated');
+    }
+
+    const response = await fetch(
+      `${this.config.url}/admin/realms/${this.config.realm}/users/${userId}/execute-actions-email`,
+      {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${this.accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify([
+          "UPDATE_PASSWORD"
+        ]),
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to send password reset email (${response.status}): ${errorText}`);
+    }
+  }
+
+  /**
    * Performs local logout - clears all tokens and storage
    */
   performLocalLogout(): void {
@@ -379,6 +535,7 @@ export class KeycloakClient {
     // Clear all OAuth2 related session storage
     sessionStorage.removeItem('oauth2_access_token');
     sessionStorage.removeItem('oauth2_refresh_token');
+    sessionStorage.removeItem('oauth2_token_expiry');
     sessionStorage.removeItem('oauth2_code');
     sessionStorage.removeItem('oauth2_state');
     sessionStorage.removeItem('oauth2_code_verifier');
@@ -532,7 +689,24 @@ export class KeycloakClient {
       const userExists = await this.checkUserExists(user.email, dryRun);
       
       if (userExists) {
-        // User already exists, return success but indicate they existed
+        // User already exists, optionally send password reset email
+        if (!dryRun) {
+          try {
+            // Get user ID for sending password reset
+            const existingUser = await this.getUserByEmail(user.email);
+            if (existingUser && existingUser.id) {
+              // You can uncomment this if you want to automatically send password reset
+              // await this.sendPasswordResetEmail(existingUser.id);
+              if (process.env.NODE_ENV === 'development') {
+                console.log('User already exists:', user.email);
+              }
+            }
+          } catch (error) {
+            if (process.env.NODE_ENV === 'development') {
+              console.warn('Could not send password reset to existing user:', error);
+            }
+          }
+        }
         return { success: true, existed: true };
       }
 
@@ -541,6 +715,11 @@ export class KeycloakClient {
         enabled: true,
         emailVerified: false,
         attributes: {},
+        // Add required actions for new users
+        requiredActions: [
+          "VERIFY_EMAIL",
+          "UPDATE_PASSWORD"
+        ]
       };
 
       // Map selected attributes
@@ -652,6 +831,30 @@ export class KeycloakClient {
           console.error('User creation failed:', response.status, errorText);
         }
         throw new Error(`User creation failed (${response.status}): ${response.statusText} - ${errorText}`);
+      }
+
+      // Get the created user's ID from the Location header
+      const locationHeader = response.headers.get('Location');
+      let userId: string | null = null;
+      
+      if (locationHeader) {
+        const urlParts = locationHeader.split('/');
+        userId = urlParts[urlParts.length - 1];
+      }
+      
+      // If we have the user ID, send verification email
+      if (userId) {
+        try {
+          await this.sendVerificationEmail(userId);
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Verification email sent to:', user.email);
+          }
+        } catch (emailError) {
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('Failed to send verification email:', emailError);
+          }
+          // Don't fail the entire operation if email sending fails
+        }
       }
 
       return { success: true, existed: false };
