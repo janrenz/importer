@@ -24,14 +24,6 @@ interface UsersTabProps {
   onUserCountUpdate?: (count: number) => void;
 }
 
-interface UserProfile {
-  sub?: string;
-  id?: string;
-  schulnummer?: string;
-  attributes?: {
-    schulnummer?: string | string[];
-  };
-}
 
 const USERS_PER_PAGE = 20;
 
@@ -45,7 +37,7 @@ export default function UsersTab({ keycloakConfig, isKeycloakAuthenticated, onUs
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [emailFilter, setEmailFilter] = useState<'all' | 'verified' | 'unverified'>('all');
-  const { userProfile, userId, schulnummer: currentUserSchoolId } = useUserProfile();
+  const { userId, schulnummer: currentUserSchoolId } = useUserProfile();
 
 
   const loadUsers = useCallback(async (page: number = 1, search: string = '') => {

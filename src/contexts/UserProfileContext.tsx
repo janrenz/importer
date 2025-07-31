@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
 import { KeycloakConfig } from '@/types';
 import { KeycloakClient } from '@/lib/keycloakClient';
 
@@ -40,38 +40,83 @@ export function UserProfileProvider({ children, keycloakConfig, isAuthenticated 
   const [error, setError] = useState<string | null>(null);
 
   const refreshProfile = async () => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('UserProfileContext.refreshProfile called:', {
+        isAuthenticated,
+        currentUserProfile: !!userProfile,
+        currentLoading: loading,
+        currentError: error
+      });
+    }
+    
     if (!isAuthenticated) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('UserProfileContext: Not authenticated, clearing profile');
+      }
       setUserProfile(null);
       setError(null);
+      setLoading(false);
       return;
     }
 
+    if (process.env.NODE_ENV === 'development') {
+      console.log('UserProfileContext: Starting profile fetch, setting loading=true');
+    }
     setLoading(true);
     setError(null);
 
     try {
       const client = new KeycloakClient(keycloakConfig);
+      
+      // Check if client has valid token before making request
+      if (process.env.NODE_ENV === 'development') {
+        console.log('UserProfileContext: Checking token validity before profile fetch');
+        const isTokenValid = await client.ensureValidToken();
+        console.log('UserProfileContext: Token validity check result:', isTokenValid);
+      }
+      
       const profile = await client.getCurrentUserProfile();
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Profile fetched successfully:', profile);
+      }
       
       // Check if user has the required "LEIT" role
       const userRole = profile.rolle || profile.attributes?.rolle?.[0] || profile.attributes?.rolle;
       if (userRole !== 'LEIT') {
         setError('Dieses Tool kann nur mit einem Account der Schulleitung verwendet werden. Ihre Rolle: ' + (userRole || 'Nicht definiert'));
         setUserProfile(null);
+        setLoading(false);
         return;
       }
       
       setUserProfile(profile);
+      setLoading(false);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('UserProfileContext: Profile fetch successful, setting loading=false');
+      }
     } catch (err) {
       console.error('Failed to fetch user profile:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch user profile');
       setUserProfile(null);
-    } finally {
       setLoading(false);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('UserProfileContext: Profile fetch failed, setting loading=false');
+      }
     }
   };
 
   useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('UserProfileContext useEffect triggered:', {
+        isAuthenticated,
+        keycloakUrl: keycloakConfig.url,
+        keycloakRealm: keycloakConfig.realm,
+        timestamp: new Date().toISOString()
+      });
+    }
+    
+    // Always call refreshProfile - it will handle both authenticated and unauthenticated cases
     refreshProfile();
   }, [isAuthenticated, keycloakConfig.url, keycloakConfig.realm]);
 
@@ -107,18 +152,40 @@ export function UserProfileProvider({ children, keycloakConfig, isAuthenticated 
     return () => clearInterval(interval);
   }, [isAuthenticated, keycloakConfig]);
 
-  const schulnummer = userProfile?.schulnummer || 
-                     (Array.isArray(userProfile?.attributes?.schulnummer) 
-                       ? userProfile?.attributes?.schulnummer[0] 
-                       : userProfile?.attributes?.schulnummer) || 
-                     null;
+  // Extract schulnummer with simple, reliable logic
+  const schulnummer = useMemo(() => {
+    if (!userProfile) return null;
+    
+    // Define all possible paths to check
+    const paths = [
+      userProfile.schulnummer,
+      userProfile.attributes?.schulnummer,
+      userProfile.fullProfile?.attributes?.schulnummer
+    ];
+    
+    // Find the first non-null, non-undefined value
+    for (const path of paths) {
+      if (path !== null && path !== undefined) {
+        // Handle array format (Keycloak attributes are often arrays)
+        if (Array.isArray(path)) {
+          const firstValue = path[0];
+          if (firstValue !== null && firstValue !== undefined) {
+            return firstValue;
+          }
+        } else {
+          // Handle string/number format
+          return path;
+        }
+      }
+    }
+    
+    return null;
+  }, [userProfile]);
 
   // Debug logging
-  if (process.env.NODE_ENV === 'development' && userProfile) {
-    console.log('UserProfile full data:', userProfile);
-    console.log('Extracted schulnummer:', schulnummer);
-    console.log('Direct schulnummer:', userProfile.schulnummer);
-    console.log('Attributes schulnummer:', userProfile.attributes?.schulnummer);
+  if (process.env.NODE_ENV === 'development') {
+    console.log('UserProfile Context - extracted schulnummer:', schulnummer);
+    console.log('UserProfile Context - loading:', loading, 'authenticated:', isAuthenticated);
   }
 
   const userId = userProfile?.sub || userProfile?.id || null;

@@ -16,7 +16,6 @@ interface SyncProgressProps {
 }
 
 export default function SyncProgress({ results, totalUsers, isComplete, isDryRun = false, onRunActualSync }: SyncProgressProps) {
-  const successful = results.filter(r => r.success).length;
   const failed = results.filter(r => !r.success).length;
   const created = results.filter(r => r.success && !r.existed).length;
   const alreadyExisted = results.filter(r => r.success && r.existed).length;

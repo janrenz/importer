@@ -617,6 +617,10 @@ export class KeycloakClient {
         });
       }
 
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Keycloak Profile - schulnummer extracted:', customAttributes.schulnummer);
+      }
+
       const enrichedProfile = {
         ...userInfo,
         ...customAttributes,

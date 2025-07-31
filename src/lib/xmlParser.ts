@@ -1,6 +1,20 @@
 import { User } from '@/types';
+import { parseXMLFileSecure } from './secureXmlParser';
 
+/**
+ * @deprecated Use parseXMLFileSecure instead for enhanced security
+ * This function is maintained for backwards compatibility
+ */
 export function parseXMLFile(xmlContent: string): User[] {
+  console.warn('Using deprecated parseXMLFile - consider upgrading to parseXMLFileSecure');
+  const result = parseXMLFileSecure(xmlContent);
+  return result.users;
+}
+
+/**
+ * Legacy implementation kept for reference - DO NOT USE IN PRODUCTION
+ */
+function parseXMLFileLegacy(xmlContent: string): User[] {
   const parser = new DOMParser();
   const doc = parser.parseFromString(xmlContent, 'text/xml');
   

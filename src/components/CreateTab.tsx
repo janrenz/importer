@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { User, KeycloakConfig, SyncableAttribute } from '@/types';
 import { KeycloakClient } from '@/lib/keycloakClient';
 import { parseCSVFile, generateMappingReport, processCSVWithMapping, generateUserIdFromEmail } from '@/lib/csvParser';
@@ -156,9 +156,7 @@ export default function CreateTab({ keycloakConfig, isKeycloakAuthenticated }: C
       const mappingReport = generateMappingReport(mapping, Object.keys(mapping));
       
       // Prepare status message
-      let statusMessage = `${users.length} Benutzer erfolgreich importiert.`;
       if (errors.length > 0) {
-        statusMessage += ` ${errors.length} Warnungen aufgetreten.`;
       }
 
       setCsvUploadStatus({
@@ -285,7 +283,7 @@ export default function CreateTab({ keycloakConfig, isKeycloakAuthenticated }: C
     });
   }, []);
 
-  const handleSync = async (dryRun: boolean = false) => {
+  const handleSync = async () => {
     const validManualUsers = validateUsers();
     if (validManualUsers.length === 0) {
       alert('Bitte geben Sie mindestens einen gültigen Benutzer mit Name und E-Mail-Adresse ein.');
@@ -366,7 +364,6 @@ export default function CreateTab({ keycloakConfig, isKeycloakAuthenticated }: C
   const validUsers = validateUsers();
   const teacherCount = validUsers.filter(u => u.userType === 'teacher').length;
   const canSync = teacherCount > 0 && !isSyncing;
-  const canTest = validUsers.length > 0 && !isSyncing;
 
   return (
     <div className="space-y-6">
@@ -494,7 +491,8 @@ export default function CreateTab({ keycloakConfig, isKeycloakAuthenticated }: C
                             value={user.firstName}
                             onChange={(e) => updateUser(user.id, 'firstName', e.target.value)}
                             placeholder="Vorname"
-                            className="w-full px-2 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="form-input py-2 text-sm min-h-[40px]"
+                            aria-label={`Vorname für Benutzer ${index + 1}`}
                           />
                         </td>
                         <td className="py-3 px-2">
@@ -660,6 +658,25 @@ export default function CreateTab({ keycloakConfig, isKeycloakAuthenticated }: C
                     </svg>
                     {isSyncing ? 'Erstelle...' : 'Benutzer erstellen'}
                   </button>
+                </div>
+              </div>
+              
+              {/* Info Panel */}
+              <div className="mt-4 p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
+                <div className="flex items-start space-x-3">
+                  <div className="w-6 h-6 bg-orange-100 dark:bg-orange-900/50 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <svg className="w-4 h-4 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-orange-900 dark:text-orange-100 mb-1">
+                      Wichtiger Hinweis
+                    </h4>
+                    <p className="text-sm text-orange-700 dark:text-orange-300 leading-relaxed">
+                      Bitte wählen Sie nur Lehrkräfte zum Anlegen eines Kontos aus, wenn Sie die Stammschule für diese Lehrkräfte sind.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>

@@ -66,15 +66,73 @@ body {
   }
   
   .btn-primary {
-    @apply bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-medium px-6 py-3 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:transform active:scale-95;
+    @apply bg-blue-600 hover:bg-blue-700 active:bg-blue-800 focus:bg-blue-700 focus:ring-4 focus:ring-blue-500/20 text-white font-medium px-6 py-3 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:transform active:scale-95 focus:outline-none;
   }
   
   .btn-secondary {
-    @apply bg-slate-100 hover:bg-slate-200 active:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 dark:active:bg-slate-500 text-slate-800 dark:text-slate-200 font-medium px-6 py-3 rounded-lg transition-all duration-200;
+    @apply bg-slate-100 hover:bg-slate-200 active:bg-slate-300 focus:bg-slate-200 focus:ring-4 focus:ring-slate-500/20 dark:bg-slate-700 dark:hover:bg-slate-600 dark:active:bg-slate-500 dark:focus:bg-slate-600 text-slate-800 dark:text-slate-200 font-medium px-6 py-3 rounded-lg transition-all duration-200 focus:outline-none;
   }
   
   .btn-accent {
-    @apply bg-sky-500 hover:bg-sky-600 active:bg-sky-700 text-white font-medium px-6 py-3 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:transform active:scale-95;
+    @apply bg-sky-500 hover:bg-sky-600 active:bg-sky-700 focus:bg-sky-600 focus:ring-4 focus:ring-sky-500/20 text-white font-medium px-6 py-3 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:transform active:scale-95 focus:outline-none;
+  }
+
+  .btn-danger {
+    @apply bg-red-600 hover:bg-red-700 active:bg-red-800 focus:bg-red-700 focus:ring-4 focus:ring-red-500/20 text-white font-medium px-6 py-3 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:transform active:scale-95 focus:outline-none;
+  }
+
+  .form-input {
+    @apply w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .form-input-error {
+    @apply border-red-500 dark:border-red-400 focus:ring-red-500 focus:border-red-500;
+  }
+
+  .form-label {
+    @apply block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2;
+  }
+
+  .form-error {
+    @apply text-sm text-red-600 dark:text-red-400 mt-1;
+  }
+
+  .form-help {
+    @apply text-sm text-slate-500 dark:text-slate-400 mt-1;
+  }
+
+  /* Skip link for keyboard users */
+  .skip-link {
+    @apply absolute -top-40 left-6 z-[100] bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 focus:top-6;
+  }
+
+  /* Focus visible improvements */
+  .focus-ring {
+    @apply focus:ring-4 focus:ring-blue-500/20 focus:outline-none;
+  }
+
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    .btn-primary {
+      @apply border-2 border-blue-800;
+    }
+    .card {
+      @apply border-2;
+    }
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-fade-in,
+    .animate-slide-up,
+    .animate-bounce-in {
+      animation: none;
+    }
+    .transition-all,
+    .transition-colors,
+    .transition-transform {
+      transition: none;
+    }
   }
 }
 

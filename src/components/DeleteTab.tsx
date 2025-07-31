@@ -18,13 +18,11 @@ interface DeleteResult {
 }
 
 export default function DeleteTab({ keycloakConfig, xmlUsers, isKeycloakAuthenticated }: DeleteTabProps) {
-  const [keycloakUsers, setKeycloakUsers] = useState<User[]>([]);
   const [usersToDelete, setUsersToDelete] = useState<User[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteResults, setDeleteResults] = useState<DeleteResult[]>([]);
-  const [deleteComplete, setDeleteComplete] = useState(false);
 
   const findOldUsers = useCallback(async () => {
     if (!isKeycloakAuthenticated) {
@@ -38,8 +36,7 @@ export default function DeleteTab({ keycloakConfig, xmlUsers, isKeycloakAuthenti
       // OAuth2 authentication is handled globally, token is stored in session
       
       const allKeycloakUsers = await client.getAllUsers();
-      setKeycloakUsers(allKeycloakUsers);
-
+      
       // Find users in Keycloak that are not in the current XML
       const xmlEmails = new Set(xmlUsers.map(u => u.email?.toLowerCase()).filter(email => email));
       const obsoleteUsers = allKeycloakUsers.filter(user => {
@@ -69,8 +66,7 @@ export default function DeleteTab({ keycloakConfig, xmlUsers, isKeycloakAuthenti
       // OAuth2 authentication is handled globally, token is stored in session
       
       const allKeycloakUsers = await client.getAllUsers();
-      setKeycloakUsers(allKeycloakUsers);
-
+      
       // Filter out the current admin user by username
       const currentUserEmail = keycloakConfig.username?.toLowerCase();
       const filteredUsers = allKeycloakUsers.filter(user => {

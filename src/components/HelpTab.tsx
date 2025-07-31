@@ -170,7 +170,7 @@ const helpTopics: HelpTopicData[] = [
             <div>
               <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-2">Anmeldeseite aufrufen</h4>
               <p className="text-sm text-slate-600 dark:text-slate-400">
-                Klicken Sie auf "Keycloak Login" und warten Sie bis die Anmeldeseite geladen ist.
+                Klicken Sie auf &quot;Keycloak Login&quot; und warten Sie bis die Anmeldeseite geladen ist.
               </p>
             </div>
           </div>
@@ -180,7 +180,7 @@ const helpTopics: HelpTopicData[] = [
               <span className="text-sm font-bold text-blue-600 dark:text-blue-400">2</span>
             </div>
             <div>
-              <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-2">"Passwort vergessen?" anklicken</h4>
+              <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-2">&quot;Passwort vergessen?&quot; anklicken</h4>
               <p className="text-sm text-slate-600 dark:text-slate-400">
                 Unterhalb des Anmeldeformulars finden Sie den Link "Passwort vergessen?". Klicken Sie darauf.
               </p>
@@ -573,7 +573,7 @@ const helpTopics: HelpTopicData[] = [
           <ul className="text-sm text-orange-700 dark:text-orange-300 space-y-1">
             <li>• Deaktivierte Accounts sind grau/durchgestrichen dargestellt</li>
             <li>• Wählen Sie den deaktivierten Account aus</li>
-            <li>• Klicken Sie auf "Aktivieren" (grüner Button)</li>
+            <li>• Klicken Sie auf &quot;Aktivieren&quot; (grüner Button)</li>
             <li>• Der Account ist sofort wieder nutzbar</li>
           </ul>
         </div>
@@ -606,7 +606,7 @@ const helpTopics: HelpTopicData[] = [
                 <li>• Überprüfen Sie Ihre E-Mail-Adresse und Passwort</li>
                 <li>• Haben Sie Ihren Account bestätigt?</li>
                 <li>• Versuchen Sie das Passwort zurückzusetzen</li>
-                <li>• Prüfen Sie, ob Sie die Rolle "LEIT" haben</li>
+                <li>• Prüfen Sie, ob Sie die Rolle &quot;LEIT&quot; haben</li>
                 <li>• Leeren Sie den Browser-Cache</li>
               </ul>
             </div>
@@ -676,7 +676,7 @@ const helpTopics: HelpTopicData[] = [
           </p>
           <div className="text-sm text-gray-700 dark:text-gray-300 space-y-2">
             <p>• Schauen Sie in den anderen Hilfe-Artikeln nach</p>
-            <p>• Kontaktieren Sie den Support über "So erhalte ich Support"</p>
+            <p>• Kontaktieren Sie den Support über &quot;So erhalte ich Support&quot;</p>
             <p>• Beschreiben Sie Ihr Problem möglichst detailliert</p>
             <p>• Fügen Sie Screenshots bei, wenn möglich</p>
           </div>

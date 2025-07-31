@@ -107,38 +107,46 @@ export default function PrincipalRegistration({ onBack, isAuthenticated = false 
         return (
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              <label htmlFor="school-number-input" className="form-label">
                 Schulnummer *
               </label>
-              <div className="flex space-x-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <div className="flex-1">
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500 text-sm">
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500 text-sm pointer-events-none">
                       NW-
                     </span>
                     <input
+                      id="school-number-input"
                       type="text"
                       value={schoolNumber}
                       onChange={(e) => setSchoolNumber(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && fetchSchoolInfo()}
-                      className="w-full pl-12 pr-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      onKeyPress={(e) => e.key === 'Enter' && !loading && schoolNumber.trim() && fetchSchoolInfo()}
+                      className="form-input pl-12 pr-4 py-3 min-h-[44px]"
                       placeholder="XXXXXX"
+                      required
+                      aria-describedby="school-number-help"
+                      disabled={loading}
                     />
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    Geben Sie die 6-stellige Schulnummer ohne "NW-" Präfix ein
+                  <p id="school-number-help" className="form-help">
+                    Geben Sie die 6-stellige Schulnummer ohne &quot;NW-&quot; Präfix ein
                   </p>
                 </div>
                 <button
                   onClick={fetchSchoolInfo}
                   disabled={loading || !schoolNumber.trim()}
-                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 text-white font-medium rounded-lg transition-colors shadow-lg hover:shadow-xl disabled:cursor-not-allowed"
+                  className="btn-primary px-6 py-3 min-h-[44px] whitespace-nowrap"
+                  aria-describedby={loading ? "search-status" : undefined}
                 >
                   {loading ? (
-                    <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
+                    <>
+                      <svg className="w-5 h-5 animate-spin mr-2" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <span id="search-status">Suche...</span>
+                    </>
                   ) : (
                     'Suchen'
                   )}
@@ -167,7 +175,7 @@ export default function PrincipalRegistration({ onBack, isAuthenticated = false 
                     Schulnummer finden
                   </h4>
                   <p className="text-sm text-blue-700 dark:text-blue-300 leading-relaxed mb-2">
-                    Die Schulnummer steht in SchILD unter "Extras → Schule bearbeiten" oder kann bei der Bezirksregierung erfragt werden.
+                    Die Schulnummer steht in SchILD unter &quot;Extras → Schule bearbeiten&quot; oder kann bei der Bezirksregierung erfragt werden.
                   </p>
                   <p className="text-sm text-blue-700 dark:text-blue-300 leading-relaxed">
                     Alternativ können Sie Ihre Schulnummer auch in der{' '}
@@ -522,7 +530,7 @@ export default function PrincipalRegistration({ onBack, isAuthenticated = false 
                   Nächste Schritte
                 </h4>
                 <p className="text-sm text-blue-800 dark:text-blue-200">
-                  Wechseln Sie zum "SchILD Import" Tab, um mit der Synchronisation Ihrer Benutzer zu beginnen.
+                  Wechseln Sie zum &quot;SchILD Import&quot; Tab, um mit der Synchronisation Ihrer Benutzer zu beginnen.
                 </p>
               </div>
             </div>
@@ -557,7 +565,7 @@ export default function PrincipalRegistration({ onBack, isAuthenticated = false 
           Schulleiter einrichten
         </h1>
         <p className="text-slate-600 dark:text-slate-400">
-          Erstellen Sie einen Administrator-Account für die Schulleitung
+          Erstellen Sie einen Administrator-Account für die Schulleitung. Wenn Sie beriets einen Account haben, können Sie sich <a href="/login" className="text-blue-600 dark:text-blue-400 hover:underline">hier anmelden</a>.
         </p>
       </div>
 

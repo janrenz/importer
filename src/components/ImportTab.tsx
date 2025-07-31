@@ -180,7 +180,6 @@ export default function ImportTab({ keycloakConfig, isKeycloakAuthenticated, use
                   selectedAttributes.size > 0 && 
                   !isSyncing;
 
-  const canTest = selectedUsers.size > 0 && !isSyncing;
 
   return (
     <div className="space-y-6">
@@ -281,6 +280,24 @@ export default function ImportTab({ keycloakConfig, isKeycloakAuthenticated, use
                     </div>
                   </div>
                   
+                  {/* Info Panel */}
+                  <div className="mt-4 p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
+                    <div className="flex items-start space-x-3">
+                      <div className="w-6 h-6 bg-orange-100 dark:bg-orange-900/50 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <svg className="w-4 h-4 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-semibold text-orange-900 dark:text-orange-100 mb-1">
+                          Wichtiger Hinweis
+                        </h4>
+                        <p className="text-sm text-orange-700 dark:text-orange-300 leading-relaxed">
+                          Bitte wählen Sie nur Lehrkräfte zum Anlegen eines Kontos aus, wenn Sie die Stammschule für diese Lehrkräfte sind.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                   
                   <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
                     <button

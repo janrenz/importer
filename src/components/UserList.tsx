@@ -111,69 +111,82 @@ export default function UserList({
         </div>
 
         {/* Filters */}
-        <div className="card p-3">
+        <div className="card p-3 sm:p-4">
           <div className="flex flex-col gap-4">
             {/* Search */}
             <div className="flex-1">
+              <label htmlFor="user-search" className="sr-only">
+                Benutzer suchen
+              </label>
               <div className="relative">
-                <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
                 <input
+                  id="user-search"
                   type="text"
                   placeholder="Benutzer suchen..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="form-input pl-10 pr-4 py-3 min-h-[44px]"
                 />
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col gap-4">
               {/* User Type Filter */}
-              <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
-                <button
-                  onClick={() => setFilter('all')}
-                  className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
-                    filter === 'all'
-                      ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
-                  }`}
-                >
-                  Alle ({totalCount})
-                </button>
-                <button
-                  onClick={() => setFilter('students')}
-                  className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
-                    filter === 'students'
-                      ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
-                  }`}
-                >
-                  Schüler ({studentsCount})
-                </button>
-                <button
-                  onClick={() => setFilter('teachers')}
-                  className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
-                    filter === 'teachers'
-                      ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
-                  }`}
-                >
-                  Lehrkräfte ({teachersCount})
-                </button>
+              <div>
+                <fieldset>
+                  <legend className="sr-only">Benutzertyp filtern</legend>
+                  <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1 overflow-x-auto">
+                    <button
+                      onClick={() => setFilter('all')}
+                      className={`px-3 py-2 text-xs sm:text-sm font-medium rounded-md transition-all whitespace-nowrap min-h-[44px] ${
+                        filter === 'all'
+                          ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
+                      }`}
+                      aria-pressed={filter === 'all'}
+                    >
+                      Alle ({totalCount})
+                    </button>
+                    <button
+                      onClick={() => setFilter('students')}
+                      className={`px-3 py-2 text-xs sm:text-sm font-medium rounded-md transition-all whitespace-nowrap min-h-[44px] ${
+                        filter === 'students'
+                          ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
+                      }`}
+                      aria-pressed={filter === 'students'}
+                    >
+                      Schüler ({studentsCount})
+                    </button>
+                    <button
+                      onClick={() => setFilter('teachers')}
+                      className={`px-3 py-2 text-xs sm:text-sm font-medium rounded-md transition-all whitespace-nowrap min-h-[44px] ${
+                        filter === 'teachers'
+                          ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
+                      }`}
+                      aria-pressed={filter === 'teachers'}
+                    >
+                      Lehrkräfte ({teachersCount})
+                    </button>
+                  </div>
+                </fieldset>
               </div>
 
               {/* Grade Filter */}
               {availableGrades.length > 0 && (
-                <div className="flex items-center gap-2">
-                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                  <label htmlFor="grade-filter" className="text-sm font-medium text-slate-700 dark:text-slate-300">
                     Klasse:
                   </label>
                   <select
+                    id="grade-filter"
                     value={gradeFilter}
                     onChange={(e) => setGradeFilter(e.target.value)}
-                    className="px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    className="form-input py-3 min-h-[44px] flex-1 sm:flex-initial"
                   >
                     <option value="all">Alle Klassen</option>
                     {availableGrades.map(grade => (

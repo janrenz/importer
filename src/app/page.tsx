@@ -9,9 +9,9 @@ import HelpTab from '@/components/HelpTab';
 import PrincipalRegistration from '@/components/PrincipalRegistration';
 import SidePanel from '@/components/SidePanel';
 import Footer from '@/components/Footer';
-import FileUpload from '@/components/FileUpload';
 import LogoutButton from '@/components/LogoutButton';
 import SchoolInfo from '@/components/SchoolInfo';
+import LogoutPanel from '@/components/LogoutPanel';
 import { UserProfileProvider, useUserProfile } from '@/contexts/UserProfileContext';
 import { User, KeycloakConfig } from '@/types';
 import { KeycloakClient } from '@/lib/keycloakClient';
@@ -37,7 +37,19 @@ function AppContent({
   const [totalKeycloakUsers, setTotalKeycloakUsers] = useState<number>(0);
   
   // Use the context instead of fetching user profile directly
-  const { userProfile, error: profileError, schulnummer, refreshProfile } = useUserProfile();
+  const { userProfile, error: profileError, schulnummer, loading: profileLoading } = useUserProfile();
+
+  // Debug logging for header rendering decisions
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Header render state:', {
+      isKeycloakAuthenticated,
+      profileLoading,
+      hasUserProfile: !!userProfile,
+      hasProfileError: !!profileError,
+      schulnummer,
+      timestamp: new Date().toISOString()
+    });
+  }
 
   const handleUsersLoaded = useCallback((loadedUsers: User[]) => {
     setUsers(loadedUsers);
@@ -81,10 +93,10 @@ function AppContent({
       if (typeof window !== 'undefined') {
         const currentRedirectUri = `${window.location.protocol}//${window.location.host}/callback`;
         if (keycloakConfig.redirectUri !== currentRedirectUri) {
-          setKeycloakConfig(prev => ({
-            ...prev,
+          setKeycloakConfig({
+            ...keycloakConfig,
             redirectUri: currentRedirectUri
-          }));
+          });
         }
       }
       
@@ -109,10 +121,7 @@ function AppContent({
             console.log('Login completion result:', success);
           }
           setIsKeycloakAuthenticated(success);
-          // Manually refresh profile after successful authentication to ensure header updates
-          if (success) {
-            setTimeout(() => refreshProfile(), 100);
-          }
+          // Profile will be refreshed automatically by UserProfileContext useEffect
         } catch (error) {
           console.error('OAuth2 completion error:', error);
           setIsKeycloakAuthenticated(false);
@@ -123,10 +132,7 @@ function AppContent({
       } else {
         const isAuth = keycloakClient.isAuthenticated();
         setIsKeycloakAuthenticated(isAuth);
-        // Manually refresh profile after successful authentication detection
-        if (isAuth) {
-          setTimeout(() => refreshProfile(), 100);
-        }
+        // Profile will be refreshed automatically by UserProfileContext useEffect
       }
     };
 
@@ -495,88 +501,20 @@ function AppContent({
         return <HelpTab />;
       case 'logout':
         return (
-          <div className="max-w-2xl mx-auto space-y-6">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">
-                Ausloggen
-              </h1>
-              <p className="text-slate-600 dark:text-slate-400">
-                Sitzung beenden und Daten zurücksetzen
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              <div className="card p-6 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
-                <div className="flex items-start space-x-3">
-                  <svg className="w-6 h-6 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <div>
-                    <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2">
-                      Lokale Anwendung
-                    </h3>
-                    <p className="text-blue-700 dark:text-blue-300 leading-relaxed">
-                      Diese Anwendung läuft vollständig lokal in Ihrem Browser. Es gibt keine Server-Sitzung, die beendet werden muss. 
-                      Um alle Daten zu löschen und die Anwendung zurückzusetzen, laden Sie einfach die Seite neu.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="card p-6 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800">
-                <div className="flex items-start space-x-3">
-                  <svg className="w-6 h-6 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.98-.833-2.75 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                  </svg>
-                  <div>
-                    <h3 className="text-lg font-semibold text-amber-900 dark:text-amber-100 mb-2">
-                      Was wird zurückgesetzt:
-                    </h3>
-                    <ul className="text-amber-700 dark:text-amber-300 space-y-1">
-                      <li>• Keycloak-Konfiguration</li>
-                      <li>• Hochgeladene XML-Dateien</li>
-                      <li>• Ausgewählte Benutzer</li>
-                      <li>• Manuell erstellte Benutzer</li>
-                      <li>• Synchronisationsergebnisse</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-center space-x-4 pt-6">
-              <button
-                onClick={() => setActiveTab('import')}
-                className="px-6 py-3 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 font-medium transition-colors"
-              >
-                Zurück
-              </button>
-              <button
-                onClick={async () => {
-                  try {
-                    const client = new KeycloakClient(keycloakConfig);
-                    await client.logout();
-                  } catch (error) {
-                    console.error('Logout error:', error);
-                  } finally {
-                    // Always reload the page after logout
-                    window.location.reload();
-                  }
-                }}
-                className="flex items-center space-x-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors shadow-lg hover:shadow-xl"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                <span>Ausloggen & Seite neu laden</span>
-              </button>
-            </div>
-          </div>
+          <LogoutPanel 
+            onBack={() => setActiveTab('import')}
+            onLogout={async () => {
+              try {
+                const client = new KeycloakClient(keycloakConfig);
+                await client.logout();
+              } catch (error) {
+                console.error('Logout error:', error);
+              } finally {
+                // Always reload the page after logout
+                window.location.reload();
+              }
+            }}
+          />
         );
       default:
         return null;
@@ -599,15 +537,56 @@ function AppContent({
                   NRW telli Nutzerverwaltung für Schulleitungen
                 </h1>
                 <div className="mt-1">
-                  {isKeycloakAuthenticated ? (
-                    <SchoolInfo 
-                      schulnummer={schulnummer || undefined} 
-                    />
-                  ) : (
-                    <p className="text-sm text-slate-600 dark:text-slate-400">
-                      Keycloak Integration
-                    </p>
-                  )}
+                  {(() => {
+                    if (process.env.NODE_ENV === 'development') {
+                      console.log('Header rendering decision path:', {
+                        isKeycloakAuthenticated,
+                        profileLoading,
+                        hasUserProfile: !!userProfile,
+                        hasProfileError: !!profileError,
+                        willShowSchoolInfo: isKeycloakAuthenticated && (userProfile || profileError),
+                        willShowLoading: isKeycloakAuthenticated && profileLoading,
+                        willShowFallbackLoading: isKeycloakAuthenticated && !profileLoading && !userProfile && !profileError
+                      });
+                    }
+                    
+                    if (!isKeycloakAuthenticated) {
+                      return (
+                        <p className="text-sm text-slate-600 dark:text-slate-400">
+                          Keycloak Integration
+                        </p>
+                      );
+                    }
+                    
+                    if (profileLoading) {
+                      return (
+                        <div className="flex items-center space-x-2">
+                          <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                          <span className="text-sm text-slate-600 dark:text-slate-400">
+                            Lade Benutzerprofile... (loading=true)
+                          </span>
+                        </div>
+                      );
+                    }
+                    
+                    if (userProfile || profileError) {
+                      return (
+                        <SchoolInfo 
+                          schulnummer={schulnummer} 
+                          loading={false}
+                        />
+                      );
+                    }
+                    
+                    return (
+                      <div className="flex items-center space-x-2">
+                        <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                        <span className="text-sm text-slate-600 dark:text-slate-400">
+                          Lade Benutzerprofile... (fallback)
+                        </span>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             </div>
@@ -638,26 +617,34 @@ function AppContent({
         {/* Main Content */}
         <div className="flex-1 flex flex-col">
           {/* Tab Navigation */}
-          <div className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
+          <nav 
+            className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900"
+            role="tablist"
+            aria-label="Hauptnavigation"
+          >
             <div className="px-4 sm:px-6 lg:px-8">
-              <div className="flex space-x-8">
+              <div className="flex space-x-2 sm:space-x-8 overflow-x-auto pb-px">
                 {tabs.map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                    role="tab"
+                    aria-selected={activeTab === tab.id}
+                    aria-controls={`tabpanel-${tab.id}`}
+                    className={`flex items-center space-x-2 py-4 px-2 sm:px-1 border-b-2 font-medium text-xs sm:text-sm transition-colors whitespace-nowrap min-h-[44px] ${
                       activeTab === tab.id
                         ? 'border-blue-500 text-blue-600 dark:text-blue-400'
                         : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-blue-700 dark:hover:text-blue-300 hover:border-blue-300 dark:hover:border-blue-600'
                     }`}
                   >
-                    {tab.icon}
-                    <span>{tab.label}</span>
+                    <span className="flex-shrink-0">{tab.icon}</span>
+                    <span className="hidden sm:inline">{tab.label}</span>
+                    <span className="sm:hidden text-xs">{tab.label.split(' ')[0]}</span>
                   </button>
                 ))}
               </div>
             </div>
-          </div>
+          </nav>
 
           {/* XML Loader - Only for Delete tab */}
           {/* {activeTab === 'delete' && (
@@ -667,7 +654,13 @@ function AppContent({
           )} */}
 
           {/* Tab Content */}
-          <div className="flex-1 p-4 sm:p-6 lg:p-8">
+          <div 
+            className="flex-1 p-4 sm:p-6 lg:p-8"
+            role="tabpanel"
+            id={`tabpanel-${activeTab}`}
+            aria-labelledby={`tab-${activeTab}`}
+            tabIndex={0}
+          >
             {renderTabContent()}
           </div>
         </div>
