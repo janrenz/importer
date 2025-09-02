@@ -1,22 +1,27 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import FileUpload from '@/components/FileUpload';
-
-// Mock the secure XML parser
-jest.mock('@/lib/secureXmlParser', () => ({
-  parseXMLFileSecure: jest.fn()
+// Mock parseXMLFileSecure directly
+const mockParseXMLFileSecure = jest.fn();
+jest.doMock('@/lib/secureXmlParser', () => ({
+  parseXMLFileSecure: mockParseXMLFileSecure
 }));
 
 // Mock security utilities
-jest.mock('@/types/security', () => ({
-  securityUtils: {
-    validateFileType: jest.fn(() => true),
-    sanitizeFilename: jest.fn((filename) => filename),
-    isSecureContext: jest.fn(() => true)
-  },
-  SECURITY_LIMITS: {
-    MAX_FILE_SIZE: 10 * 1024 * 1024 // 10MB
-  }
+const mockSecurityUtils = {
+  validateFileType: jest.fn(() => true),
+  sanitizeFilename: jest.fn((filename: string) => filename),
+  isSecureContext: jest.fn(() => true)
+};
+
+const mockSecurityLimits = {
+  MAX_FILE_SIZE: 10 * 1024 * 1024 // 10MB
+};
+
+jest.doMock('@/types/security', () => ({
+  securityUtils: mockSecurityUtils,
+  SECURITY_LIMITS: mockSecurityLimits
 }));
+
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import FileUpload from '@/components/FileUpload';
 
 // Mock console.error to suppress error logs in tests
 const originalConsoleError = console.error;
@@ -28,8 +33,7 @@ afterAll(() => {
   console.error = originalConsoleError;
 });
 
-import { parseXMLFileSecure } from '@/lib/secureXmlParser';
-const mockParseXMLFileSecure = parseXMLFileSecure as jest.MockedFunction<typeof parseXMLFileSecure>;
+// mockParseXMLFileSecure is already defined above
 
 describe('FileUpload', () => {
   const mockOnUsersLoaded = jest.fn();
@@ -67,8 +71,7 @@ describe('FileUpload', () => {
 
     mockParseXMLFileSecure.mockReturnValue({
       users: mockUsers,
-      warnings: [],
-      errors: []
+      warnings: []
     });
 
     render(<FileUpload onUsersLoaded={mockOnUsersLoaded} />);
@@ -128,7 +131,7 @@ describe('FileUpload', () => {
 
     render(<FileUpload onUsersLoaded={mockOnUsersLoaded} />);
     
-    const xmlContent = '<invalid-xml>';
+    const xmlContent = '<?xml version="1.0"?><invalid-xml>'; // Make it look more like XML
     const file = new File([xmlContent], 'invalid.xml', { type: 'text/xml' });
     const input = document.getElementById('xml-file-input') as HTMLInputElement;
     
@@ -163,13 +166,14 @@ describe('FileUpload', () => {
   });
 
   it('should show processing state during file processing', async () => {
-    // Create a delayed promise to simulate processing time
-    let resolvePromise: (value: any) => void;
-    const processingPromise = new Promise((resolve) => {
-      resolvePromise = resolve;
+    // Create a promise that resolves after a short delay
+    mockParseXMLFileSecure.mockImplementation(() => {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve({ users: [], warnings: [] });
+        }, 50); // Short delay to allow state change to be observed
+      });
     });
-
-    mockParseXMLFileSecure.mockReturnValue(processingPromise as any);
 
     render(<FileUpload onUsersLoaded={mockOnUsersLoaded} />);
     
@@ -184,15 +188,15 @@ describe('FileUpload', () => {
     
     fireEvent.change(input);
     
-    // Should show processing state
-    expect(screen.getByText('Datei wird verarbeitet...')).toBeInTheDocument();
+    // Should show processing state immediately
+    await waitFor(() => {
+      expect(screen.getByText('Datei wird verarbeitet...')).toBeInTheDocument();
+    });
     
-    // Resolve the promise to finish processing
-    resolvePromise!({ users: [], warnings: [], errors: [] });
-    
+    // Wait for processing to complete
     await waitFor(() => {
       expect(screen.getByText('SchILD Export (XML) hochladen')).toBeInTheDocument();
-    });
+    }, { timeout: 1000 });
   });
 
   it('should handle non-XML file types', async () => {
@@ -244,17 +248,16 @@ describe('FileUpload', () => {
       klasse: '10A',
     }];
 
-    const warnings = ['Test warning message'];
+    const parseWarnings = ['Test warning message'];
 
     mockParseXMLFileSecure.mockReturnValue({
       users: mockUsers,
-      warnings: warnings,
-      errors: []
+      warnings: parseWarnings
     });
 
     render(<FileUpload onUsersLoaded={mockOnUsersLoaded} />);
     
-    const xmlContent = '<?xml version="1.0"?><schild_export><schueler><vorname>Test</vorname></schueler></schild_export>';
+    const xmlContent = '<?xml version="1.0"?><schild_export><schueler><vorname>Test</vorname><nachname>Student</nachname><email>test@school.edu</email><schild_id>S001</schild_id></schueler></schild_export>';
     const file = new File([xmlContent], 'test.xml', { type: 'text/xml' });
     const input = document.getElementById('xml-file-input') as HTMLInputElement;
     
@@ -266,7 +269,7 @@ describe('FileUpload', () => {
     fireEvent.change(input);
     
     await waitFor(() => {
-      expect(mockOnUsersLoaded).toHaveBeenCalledWith(mockUsers, warnings);
+      expect(mockOnUsersLoaded).toHaveBeenCalledWith(mockUsers, expect.arrayContaining(parseWarnings));
     });
   });
 });

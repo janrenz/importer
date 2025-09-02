@@ -173,6 +173,13 @@ The application uses a modern design system with:
 - Implement proper loading states
 - Handle large XML files efficiently
 
+## Development Workflow
+
+### Communication Guidelines
+- Always discuss architectural decisions with me
+- Get approval before making significant changes to project structure
+- Maintain clear and open communication throughout development
+
 ## Future Enhancements
 
 Todo:

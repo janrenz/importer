@@ -28,6 +28,10 @@ Object.defineProperty(window, 'location', {
 global.fetch = jest.fn();
 const mockFetch = fetch as jest.MockedFunction<typeof fetch>;
 
+// Mock Math.random for predictable test results
+const originalMathRandom = Math.random;
+const mockMathRandom = jest.fn();
+
 describe('KeycloakClient', () => {
   const mockConfig: KeycloakConfig = {
     url: 'https://keycloak.example.com',
@@ -59,6 +63,16 @@ describe('KeycloakClient', () => {
     mockSessionStorage.setItem.mockClear();
     mockSessionStorage.removeItem.mockClear();
     window.location.href = '';
+    // Reset static variable
+    (KeycloakClient as any).tokenExchangeInProgress = false;
+    // Mock Math.random
+    Math.random = mockMathRandom;
+    mockMathRandom.mockClear();
+  });
+
+  afterAll(() => {
+    // Restore original Math.random
+    Math.random = originalMathRandom;
   });
 
   describe('OAuth2 Authentication Flow', () => {
@@ -73,11 +87,12 @@ describe('KeycloakClient', () => {
     });
 
     it('should complete login when code is available', async () => {
-      // Mock session storage with OAuth2 parameters
+      // Mock session storage with OAuth2 parameters (using correct key names)
       mockSessionStorage.getItem.mockImplementation((key) => {
-        if (key === 'oauth2_authorization_code') return 'mock-code';
+        if (key === 'oauth2_code') return 'mock-code';
         if (key === 'oauth2_state') return 'mock-state';
         if (key === 'oauth2_code_verifier') return 'mock-code-verifier';
+        if (key === 'oauth2_access_token') return null; // Not authenticated yet
         return null;
       });
 
@@ -104,6 +119,15 @@ describe('KeycloakClient', () => {
       
       expect(mockSessionStorage.getItem).toHaveBeenCalledWith('oauth2_access_token');
     });
+
+    it('should return true if already authenticated', async () => {
+      mockSessionStorage.getItem.mockReturnValue('existing-token');
+      
+      const client = new KeycloakClient(mockConfig);
+      const result = await client.completeLogin();
+      
+      expect(result).toBe(true);
+    });
   });
 
   describe('syncUser', () => {
@@ -112,6 +136,11 @@ describe('KeycloakClient', () => {
       
       // Mock console.log to verify dry run output
       const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      
+      // Control random values for predictable test results
+      mockMathRandom
+        .mockReturnValueOnce(0.8) // checkUserExists: user doesn't exist (>0.7 = exists)
+        .mockReturnValueOnce(0.5); // validation: no error (<0.1 = error)
       
       const result = await client.syncUser(mockUser, mockAttributes, true);
       
@@ -123,7 +152,27 @@ describe('KeycloakClient', () => {
       consoleSpy.mockRestore();
     });
 
+    it('should perform dry run with existing user', async () => {
+      const client = new KeycloakClient(mockConfig);
+      
+      // Control random values for predictable test results
+      mockMathRandom
+        .mockReturnValueOnce(0.6); // checkUserExists: user exists (<0.7 = doesn't exist)
+      
+      const result = await client.syncUser(mockUser, mockAttributes, true);
+      
+      expect(result.success).toBe(true);
+      expect(result.existed).toBe(true);
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
     it('should sync user successfully with authentication', async () => {
+      // Mock successful user existence check
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ([]) // No existing users
+      } as Response);
+
       // Mock successful user creation
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -151,6 +200,12 @@ describe('KeycloakClient', () => {
     });
 
     it('should handle sync failure', async () => {
+      // Mock user existence check
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ([])
+      } as Response);
+
       // Mock failed user creation
       mockFetch.mockResolvedValueOnce({
         ok: false,
@@ -169,16 +224,30 @@ describe('KeycloakClient', () => {
       expect(result.error).toBeDefined();
     });
 
-    it('should handle missing authentication token', async () => {
-      // Mock no token in session storage
-      mockSessionStorage.getItem.mockReturnValue(null);
+    it('should handle existing user', async () => {
+      // Mock user existence check returning existing user
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ([{ id: 'existing-user', email: mockUser.email }])
+      } as Response);
+
+      // Mock session storage to return a token
+      mockSessionStorage.getItem.mockReturnValue('valid-token');
 
       const client = new KeycloakClient(mockConfig);
       const result = await client.syncUser(mockUser, mockAttributes, false);
 
-      expect(result.success).toBe(false);
-      expect(result.error).toContain('authentication');
-      expect(mockFetch).not.toHaveBeenCalled();
+      expect(result.success).toBe(true);
+      expect(result.existed).toBe(true);
+    });
+
+    it('should throw error when not authenticated for live sync', async () => {
+      // Mock no token in session storage
+      mockSessionStorage.getItem.mockReturnValue(null);
+
+      const client = new KeycloakClient(mockConfig);
+      
+      await expect(client.syncUser(mockUser, mockAttributes, false)).rejects.toThrow('Not authenticated');
     });
   });
 
